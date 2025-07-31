@@ -40,7 +40,7 @@ services:
     networks:
       - temporal-network
     ports:
-      - 19110:7233
+      - 7233:7233
     volumes:
       - type: bind
         source: ../..
@@ -70,7 +70,21 @@ services:
     networks:
       - temporal-network
     ports:
-      - 19120:8080
+      - 19110:8080
+  worker:
+    container_name: temporal-worker
+    depends_on:
+      - temporal
+    build:
+      context: ../worker
+      dockerfile: Dockerfile
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_NAMESPACE=default
+      - TASK_QUEUE=sample-task-queue
+    networks:
+      - temporal-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
