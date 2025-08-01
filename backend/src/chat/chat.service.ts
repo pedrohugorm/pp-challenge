@@ -5,13 +5,13 @@ import {
   ChatCompletionTool,
 } from 'openai/resources/chat/completions/completions';
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { pipeline, env, FeatureExtractionPipeline } from '@xenova/transformers';
 
 @Injectable()
 export class ChatService {
   private openai: OpenAI;
   private qdrantClient: QdrantClient;
-  private embeddingPipeline: FeatureExtractionPipeline | null;
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+  private embeddingPipeline: any | null;
 
   constructor() {
     this.openai = new OpenAI({
@@ -30,9 +30,12 @@ export class ChatService {
 
   private async initializeEmbeddingPipeline() {
     try {
-      // Set environment to use local models
+      // Dynamically import the transformers package
+      const { pipeline, env } = await import('@xenova/transformers');
+
+      // Allow remote models to be downloaded if not available locally
       env.allowLocalModels = true;
-      env.allowRemoteModels = false;
+      env.allowRemoteModels = true;
 
       // Load the all-MiniLM-L6-v2 model
       this.embeddingPipeline = await pipeline(
@@ -52,12 +55,14 @@ export class ChatService {
         throw new Error('Embedding pipeline not initialized');
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call
       const result = await this.embeddingPipeline(text, {
         pooling: 'mean',
         normalize: true,
       });
 
-      return Array.from(result.data as any);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      return Array.from(result.data);
     } catch (error) {
       console.error('Error generating embedding:', error);
       throw error;
@@ -83,7 +88,7 @@ export class ChatService {
         vector: queryVector,
         limit: 10,
         with_payload: true,
-        score_threshold: 0.7,
+        score_threshold: 0.2,
       });
 
       console.log('Medical data search results:', searchResults);
@@ -105,12 +110,15 @@ export class ChatService {
 
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4.1',
-      messages: [{ role: 'user', content: prompt }],
+      messages: [
+        { role: 'system', content: getSearchPrompt() },
+        { role: 'user', content: prompt },
+      ],
       tools: getTools(),
       store: true,
     });
 
-    const result = [response.choices[0].message];
+    let result = [response.choices[0].message];
     if (
       response.choices[0].message.tool_calls &&
       response.choices[0].message.tool_calls.length > 0
@@ -121,7 +129,27 @@ export class ChatService {
             const args = JSON.parse(
               tool.function.arguments,
             ) as SearchMedicalDataRequest;
-            await this.searchMedicalData(args);
+            const searchResult = await this.searchMedicalData(args);
+            const medications = searchResult.map((r) => ({
+              id: r.id,
+              field: r.payload![args.field],
+            }));
+
+            const confirmationResult =
+              await this.openai.chat.completions.create({
+                model: 'gpt-4o-mini',
+                messages: [
+                  {
+                    role: 'system',
+                    content: getConfirmationPrompt(JSON.stringify(medications)),
+                  },
+                  { role: 'user', content: getConfirmationUserPrompt(prompt) },
+                ],
+                tools: getTools(),
+                store: true,
+              });
+
+            result = [...result, confirmationResult.choices[0].message];
           }
         }
       }
@@ -131,7 +159,7 @@ export class ChatService {
   }
 }
 
-const getTools = () => ([
+const getTools = () => [
   {
     type: 'function',
     function: {
@@ -139,18 +167,66 @@ const getTools = () => ([
       description: 'Searches for medication data by the user prompt.',
       parameters: {
         type: 'object',
+        required: ['userPrompt', 'field'],
         properties: {
           userPrompt: {
             type: 'string',
             description: 'the medication info the user is looking for',
           },
+          field: {
+            type: 'string',
+            description: 'the specific field of medication data to search for',
+            enum: [
+              'name',
+              'indicationsAndUsage',
+              'dosageAndAdministration',
+              'dosageFormsAndStrengths',
+              'warningsAndPrecautions',
+              'adverseReactions',
+              'clinicalPharmacology',
+              'clinicalStudies',
+              'howSupplied',
+              'useInSpecificPopulations',
+              'description',
+              'nonclinicalToxicology',
+              'instructionsForUse',
+              'mechanismOfAction',
+              'contraindications',
+              'boxedWarning',
+            ],
+          },
         },
+        additionalProperties: false,
       },
       strict: true,
     },
   } as ChatCompletionTool,
-]);
+];
+
+const getSearchPrompt = () => {
+  return `You must use the search_medication_data tool when searching for anything related to medical or drug data.
+  If not specified assume the user is interested in drug data and use the search_medication_data tool.
+  `;
+};
+
+const getConfirmationPrompt = (searchResults) => {
+  return `Your task is to read the search results list below against a user prompt and ONLY include the items that are relevant to what the user asked on your response.
+  Do not mention that there were other search results.
+  Do not mention search result items that are not relevant. 
+  ## BEGIN Search Results:
+  ${searchResults}
+  ## END Search results
+  `;
+};
+
+const getConfirmationUserPrompt = (userPrompt: string) => {
+  return `## BEGIN USER PROMPT:
+  ${userPrompt}
+  ## END USER PROMPT
+  `;
+};
 
 interface SearchMedicalDataRequest {
   userPrompt: string;
+  field: string;
 }
