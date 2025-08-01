@@ -64,6 +64,9 @@ async def process_unstructured_drug_information(unstructured_data: str) -> DrugD
 
     unstructured_data = clean_json_html(unstructured_data)
 
+    with open("cleaned.json", "w", encoding="utf-8") as pf:
+        pf.write(unstructured_data)
+
     extraction_system_prompt = """
     You are an extremely thorough data collection expert in drug information. 
     Your task is to extract structured drug information from unstructured text.
@@ -127,7 +130,6 @@ async def process_unstructured_drug_information(unstructured_data: str) -> DrugD
     Please extract and structure the drug information strictly according to the schema requirements.
     """
 
-    drug_data = await get_structured_response(DrugData, extraction_system_prompt, extraction_user_prompt)
-    return drug_data
+    return await get_structured_response(DrugData, extraction_system_prompt, extraction_user_prompt)
 
 

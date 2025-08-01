@@ -35,7 +35,6 @@ async def main():
                 print("Function executed successfully!")
                 print(f"Result type: {type(result)}")
                 print(f"Result: {result}")
-                break
                 
             except Exception as e:
                 print(f"Error occurred: {e}")

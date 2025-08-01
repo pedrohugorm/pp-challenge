@@ -4,29 +4,29 @@
     "genericName": "galcanezumab-gnlm",
     "companyName": "Eli Lilly and Company",
     "indications": [
-      "EMGALITY is indicated for the preventive treatment of migraine in adults.",
-      "EMGALITY is indicated for the treatment of episodic cluster headache in adults."
+      "Preventive treatment of migraine in adults",
+      "Treatment of episodic cluster headache in adults"
     ],
     "contraindications": [
-      "EMGALITY is contraindicated in patients with serious hypersensitivity to galcanezumab-gnlm or to any of the excipients."
+      "Serious hypersensitivity to galcanezumab-gnlm or to any of the excipients"
     ],
     "dosing": [
       {
-        "group": "adults",
+        "group": "adults (migraine)",
         "amount": "240 mg",
-        "details": "(two consecutive subcutaneous injections of 120 mg each)",
-        "frequency": "once as a loading dose, followed by monthly doses",
+        "details": "administered as two consecutive injections of 120 mg each as a loading dose, followed by monthly doses of 120 mg.",
+        "frequency": "once as a loading dose, then monthly",
         "route": "subcutaneous"
       },
       {
-        "group": "adults",
+        "group": "adults (episodic cluster headache)",
         "amount": "300 mg",
-        "details": "(three consecutive subcutaneous injections of 100 mg each)",
-        "frequency": "at the onset of the cluster period, and then monthly until the end of the cluster period.",
+        "details": "administered as three consecutive injections of 100 mg each at the onset of the cluster period, and then monthly until the end of the cluster period.",
+        "frequency": "once at the onset of the cluster period, then monthly until end of cluster period",
         "route": "subcutaneous"
       }
     ],
-    "administration": "Subcutaneous use only. Administer in the abdomen, thigh, back of the upper arm, or buttocks subcutaneously.",
+    "administration": "EMGALITY is for subcutaneous use only. Intended for patient self-administration with proper training.",
     "warnings": [
       "Hypersensitivity reactions, including dyspnea, urticaria, and rash, have occurred with EMGALITY in clinical studies and the postmarketing setting. Cases of anaphylaxis and angioedema have also been reported in the postmarketing setting. If a serious or severe hypersensitivity reaction occurs, discontinue administration of EMGALITY and initiate appropriate therapy."
     ],
@@ -35,13 +35,14 @@
       "Injection site reactions"
     ],
     "adverseReactions": [
-      "Hypersensitivity Reactions"
+      "Hypersensitivity Reactions",
+      "Injection site reactions (including multiple related adverse event terms, such as injection site pain, injection site reaction, injection site erythema, and injection site pruritus). Anaphylaxis, angioedema reported during post-approval use."
     ],
     "interactions": [
       "Galcanezumab-gnlm is not metabolized by cytochrome P450 enzymes; therefore, interactions with concomitant medications that are substrates, inducers, or inhibitors of cytochrome P450 enzymes are unlikely."
     ],
     "approvalDate": "2021-03-11",
-    "rxNormCode": null,
+    "rxNormCode": "99311",
     "ndcCodes": [
       "0002-1436-11",
       "0002-1436-27",
@@ -49,8 +50,8 @@
       "0002-2377-11",
       "0002-2377-27"
     ],
-    "atcCode": null,
+    "atcCode": "N02CX07",
     "emaId": null,
-    "confidenceScore": 95.0
+    "confidenceScore": 100.0
   }
 ]

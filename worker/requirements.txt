@@ -41,3 +41,4 @@ requests-toolbelt~=1.0.0
 packaging~=25.0
 jsonpointer~=3.0.0
 jsonpatch~=1.33
+beautifulsoup4>=4.12.0
