@@ -62,7 +62,7 @@ def upsert_q_items_to_qdrant(q_items: list[dict], collection_name: str = "drug_d
             id=item['setId'],
             vector=embedding,
             payload={
-                "item_id": i,
+                "item_id": item.get('setId'),
                 "indicationsAndUsage": item['label'].get('indicationsAndUsage', None),
                 "dosageAndAdministration": item['label'].get('dosageAndAdministration', None),
                 "dosageFormsAndStrengths": item['label'].get('dosageFormsAndStrengths', None),
