@@ -3,6 +3,7 @@ from asyncio_throttle import Throttler
 # Store rate limiters per model
 _rate_limiters = {
     "gpt-4o": Throttler(rate_limit=100, period=60),
+
     "gpt-4o-mini": Throttler(rate_limit=100, period=60)
 }
 
