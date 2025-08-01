@@ -1,31 +1,4 @@
 services:
-  postgres:
-    image: postgres:15
-    container_name: postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
-    volumes:
-      - type: volume
-        source: postgres_data
-        target: /var/lib/postgresql/data
-    ports:
-      - "19100:5432"
-  postgresql:
-    container_name: temporal-postgresql
-    environment:
-      POSTGRES_PASSWORD: temporal
-      POSTGRES_USER: temporal
-    image: postgres:15
-    networks:
-      - temporal-network
-    ports:
-      - 19101:5432
-    volumes:
-      - type: volume
-        source: postgresql_data
-        target: /var/lib/postgresql/data
   qdrant:
     container_name: qdrant
     image: qdrant/qdrant:latest
@@ -40,76 +13,22 @@ services:
         source: qdrant_data
         target: /qdrant/storage
     restart: unless-stopped
-  temporal:
-    container_name: temporal
-    depends_on:
-      - postgresql
-    environment:
-      - DB=postgres12
-      - DB_PORT=5432
-      - POSTGRES_USER=temporal
-      - POSTGRES_PWD=temporal
-      - POSTGRES_SEEDS=postgresql
-    image: temporalio/auto-setup:latest
-    networks:
-      - temporal-network
+
+  redis:
+    container_name: redis
+    image: redis:7-alpine
     ports:
-      - 7233:7233
+      - "6379:6379"
     volumes:
-      - type: bind
-        source: ../..
+      - type: volume
+        source: redis_data
         target: /data
-    labels:
-      kompose.volume.type: configMap
-  temporal-admin-tools:
-    container_name: temporal-admin-tools
-    depends_on:
-      - temporal
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CLI_ADDRESS=temporal:7233
-    image: temporalio/admin-tools:latest
-    networks:
-      - temporal-network
-    stdin_open: true
-    tty: true
-  temporal-ui:
-    container_name: temporal-ui
-    depends_on:
-      - temporal
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
-    image: temporalio/ui:latest
-    networks:
-      - temporal-network
-    ports:
-      - 19110:8080
-  worker:
-    container_name: temporal-worker
-    depends_on:
-      - temporal
-    build:
-      context: ../worker
-      dockerfile: Dockerfile
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_NAMESPACE=default
-      - TASK_QUEUE=sample-task-queue
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    networks:
-      - temporal-network
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
     restart: unless-stopped
 
 volumes:
-  postgres_data:
-    driver: local
-  postgresql_data:
-    driver: local
   qdrant_data:
     driver: local
-
-networks:
-  temporal-network:
-    driver: bridge
-    name: temporal-network
+  redis_data:
+    driver: local
