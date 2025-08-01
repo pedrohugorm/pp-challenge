@@ -61,7 +61,7 @@ export class ChatService {
         normalize: true,
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
       return Array.from(result.data);
     } catch (error) {
       console.error('Error generating embedding:', error);
