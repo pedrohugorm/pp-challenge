@@ -1,103 +1,168 @@
-import Image from "next/image";
+'use client';
+
+import React, {useEffect, useState, Suspense} from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import MedicationCard from '../components/MedicationCard';
+import MedicationAssistant from '../components/MedicationAssistant';
+import MedicationHeader from '../components/MedicationHeader';
+import LeftSidebar from '../components/LeftSidebar';
+import {fetchMedications, searchMedications, type Medication, type SearchFilters} from '@/services/medicationService';
+
+function SearchableContent() {
+    const [medications, setMedications] = useState<Medication[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const loadMedications = async () => {
+            try {
+                setLoading(true);
+                const query = searchParams.get('q');
+                
+                // Extract filters from URL parameters
+                const filters: SearchFilters = {};
+                Array.from(searchParams.entries()).forEach(([key, value]) => {
+                    if (key.startsWith('filter_')) {
+                        const categoryId = key.replace('filter_', '');
+                        filters[categoryId] = value.split(',').filter(v => v.trim() !== '');
+                    }
+                });
+                
+                console.log('SearchableContent - URL changed:', {
+                    query,
+                    filters,
+                    allParams: Array.from(searchParams.entries())
+                });
+                
+                if (query || Object.keys(filters).length > 0) {
+                    // Use search endpoint when there's a query OR filters (or both)
+                    const searchResults = await searchMedications(query || '', filters);
+                    console.log('Search results:', searchResults);
+                    setMedications(searchResults.medications);
+                } else {
+                    // Load all medications only when there's no query and no filters
+                    const data = await fetchMedications();
+                    setMedications(data.medications);
+                }
+                setError(null);
+            } catch (err) {
+                setError('Failed to load medications');
+                console.error('Error loading medications:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadMedications();
+    }, [searchParams]);
+
+    return (
+        <div className="flex-1 flex flex-col">
+            <div className="flex-1 p-4 lg:p-6 overflow-y-auto">
+                {loading && (
+                    <div className="flex justify-center items-center h-64">
+                        <div className="text-gray-500">Loading medications...</div>
+                    </div>
+                )}
+
+                {error && (
+                    <div className="flex justify-center items-center h-64">
+                        <div className="text-red-500">{error}</div>
+                    </div>
+                )}
+
+                {!loading && !error && medications.length === 0 && (
+                    <div className="flex justify-center items-center h-64">
+                        <div className="text-gray-500">No medications found</div>
+                    </div>
+                )}
+
+                {!loading && !error && medications.length > 0 && (
+                    <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4 lg:gap-6">
+                        {medications.map((med: Medication) => (
+                            <MedicationCard key={med.id} medication={med}/>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function HomeContent() {
+    const [, setCurrentFilters] = useState<{ [key: string]: string[] }>({});
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // Update URL when filters change
+    const updateUrlWithFilters = (filters: { [key: string]: string[] }) => {
+        // Create new URLSearchParams
+        const params = new URLSearchParams();
+        
+        // Preserve the search query
+        const query = searchParams.get('q');
+        if (query) {
+            params.set('q', query);
+        }
+        
+        // Add new filter parameters
+        Object.entries(filters).forEach(([categoryId, values]) => {
+            if (values.length > 0) {
+                params.set(`filter_${categoryId}`, values.join(','));
+            }
+        });
+        
+        const newUrl = params.toString() ? `/?${params.toString()}` : '/';
+        router.push(newUrl);
+    };
+
+    const handleFilterChange = (filters: { [key: string]: string[] }) => {
+        setCurrentFilters(filters);
+        updateUrlWithFilters(filters);
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50">
+            {/* Header spans full width */}
+            <div className="w-full">
+                <MedicationHeader 
+                    searchQuery={searchParams.get('q') || ""} 
+                    onFilterChange={handleFilterChange}
+                />
+            </div>
+            
+            {/* Content area below header */}
+            <div className="flex h-[calc(100vh-80px)]">
+                {/* Left Sidebar - Hidden on mobile, visible on desktop */}
+                <LeftSidebar onFilterChange={handleFilterChange} />
+
+                {/* Main Content - Medication Cards */}
+                <Suspense fallback={
+                    <div className="flex-1 flex flex-col">
+                        <div className="flex justify-center items-center h-full">
+                            <div className="text-gray-500">Loading...</div>
+                        </div>
+                    </div>
+                }>
+                    <SearchableContent />
+                </Suspense>
+
+                {/* Chat Sidebar - Hidden on mobile, visible on desktop */}
+                <MedicationAssistant/>
+            </div>
+        </div>
+    );
+}
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+                <div className="text-gray-500">Loading...</div>
+            </div>
+        }>
+            <HomeContent />
+        </Suspense>
+    );
 }

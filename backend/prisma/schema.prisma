@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Labeler {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  drugs Drug[]
+
+  @@map("labelers")
+}
+
+model Drug {
+  id                          String    @id @default(cuid())
+  name                        String
+  generic_name                String?
+  product_type                String?
+  effective_time              DateTime?
+  title                       String?
+  slug                        String    @unique
+  labeler_id                  Int
+  indications_and_usage       String?
+  dosage_and_administration   String?
+  dosage_forms_and_strengths  String?
+  warnings_and_precautions    String?
+  adverse_reactions           String?
+  clinical_pharmacology       String?
+  clinical_studies            String?
+  how_supplied                String?
+  use_in_specific_populations String?
+  description                 String?
+  nonclinical_toxicology      String?
+  instructions_for_use        String?
+  mechanism_of_action         String?
+  contraindications           String?
+  boxed_warning               String?
+  meta_description            String?
+  highlights                  Json?
+  blocks_json                 Json?
+  ai_warnings                 String?
+  ai_dosing                   String?
+  ai_use_and_conditions      String?
+  ai_contraindications       String?
+  ai_description              String?
+  vector_similar_ranking      Json?
+  meta_description_blocks     Json?
+  description_blocks          Json?
+  use_and_conditions_blocks   Json?
+  contra_indications_blocks   Json?
+  warning_blocks              Json?
+  dosing_blocks               Json?
+  created_at                  DateTime  @default(now())
+  updated_at                  DateTime  @updatedAt
+
+  labeler Labeler @relation(fields: [labeler_id], references: [id])
+  tags    DrugTag[]
+
+  @@map("drugs")
+}
+
+model Tag {
+  id         Int      @id @default(autoincrement())
+  name       String
+  category   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  drugs DrugTag[]
+
+  @@unique([name, category])
+  @@map("tags")
+}
+
+model DrugTag {
+  drug_id   String
+  tag_id    Int
+  created_at DateTime @default(now())
+
+  drug Drug @relation(fields: [drug_id], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([drug_id, tag_id])
+  @@map("drug_tags")
+}

@@ -1,115 +1,110 @@
 services:
   postgres:
-    image: postgres:${POSTGRESQL_VERSION}
     container_name: postgres
+    image: postgres:15-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      - POSTGRES_DB=drugs_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
     volumes:
       - type: volume
         source: postgres_data
         target: /var/lib/postgresql/data
-    ports:
-      - "19100:5432"
-  postgresql:
-    container_name: temporal-postgresql
-    environment:
-      POSTGRES_PASSWORD: temporal
-      POSTGRES_USER: temporal
-    image: postgres:${POSTGRESQL_VERSION}
-    networks:
-      - temporal-network
-    ports:
-      - 19101:5432
-    volumes:
-      - type: volume
-        source: postgresql_data
-        target: /var/lib/postgresql/data
-  qdrant:
-    container_name: qdrant
-    image: qdrant/qdrant:latest
-    environment:
-      - QDRANT__SERVICE__HTTP_PORT=6333
-      - QDRANT__SERVICE__GRPC_PORT=6334
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - type: volume
-        source: qdrant_data
-        target: /qdrant/storage
     restart: unless-stopped
-  temporal:
-    container_name: temporal
-    depends_on:
-      - postgresql
-    environment:
-      - DB=postgresql
-      - DB_PORT=5432
-      - POSTGRES_USER=temporal
-      - POSTGRES_PWD=temporal
-      - POSTGRES_SEEDS=postgresql
-    image: temporalio/auto-setup:${TEMPORAL_VERSION}
-    networks:
-      - temporal-network
+
+  redis:
+    container_name: redis
+    image: redis:7-alpine
     ports:
-      - 7233:7233
+      - "6379:6379"
     volumes:
-      - type: bind
-        source: ../..
+      - type: volume
+        source: redis_data
         target: /data
-    labels:
-      kompose.volume.type: configMap
-  temporal-admin-tools:
-    container_name: temporal-admin-tools
-    depends_on:
-      - temporal
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    restart: unless-stopped
+
+  chromadb:
+    container_name: chromadb
+    image: chromadb/chroma:latest
     environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CLI_ADDRESS=temporal:7233
-    image: temporalio/admin-tools:${TEMPORAL_VERSION}
-    networks:
-      - temporal-network
-    stdin_open: true
-    tty: true
-  temporal-ui:
-    container_name: temporal-ui
-    depends_on:
-      - temporal
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
-    image: temporalio/ui:${TEMPORAL_UI_VERSION}
-    networks:
-      - temporal-network
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+      - CHROMA_SERVER_CORS_ALLOW_ORIGINS=["*"]
     ports:
-      - 19110:8080
-  worker:
-    container_name: temporal-worker
-    depends_on:
-      - temporal
-    build:
-      context: ../worker
-      dockerfile: Dockerfile
+      - "8000:8000"
+    volumes:
+      - type: volume
+        source: chromadb_data
+        target: /chroma/chroma
+    restart: unless-stopped
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.0
     environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_NAMESPACE=default
-      - TASK_QUEUE=sample-task-queue
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    networks:
-      - temporal-network
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - type: volume
+        source: elasticsearch_data
+        target: /usr/share/elasticsearch/data
+    restart: unless-stopped
+
+  app:
+    container_name: nextjs-app
+    build:
+      context: ../app
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+      - redis
+      - chromadb
+      - elasticsearch
+    restart: unless-stopped
+
+  backend:
+    container_name: nestjs-backend
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - ALLOWED_ORIGINS=http://localhost:8080
+      - CHROMA_URL=http://chromadb:8000
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/drugs_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+      - chromadb
+      - elasticsearch
     restart: unless-stopped
 
 volumes:
   postgres_data:
     driver: local
-  postgresql_data:
+  redis_data:
     driver: local
-  qdrant_data:
+  chromadb_data:
     driver: local
-
-networks:
-  temporal-network:
-    driver: bridge
-    name: temporal-network
+  elasticsearch_data:
+    driver: local

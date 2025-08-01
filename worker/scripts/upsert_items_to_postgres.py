@@ -1,0 +1,342 @@
+import os
+import json
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv('../.env')
+
+def upsert_items_to_postgres(q_items, structured_items_json_array, view_blocks_array):
+    """
+    Upsert items to PostgreSQL database.
+    
+    Args:
+        q_items: List of items prepared for Qdrant/vector database
+        structured_items_json_array: List of structured JSON items
+        view_blocks_array: List of view_blocks for each item
+    """
+    # PostgreSQL connection parameters with default values
+    db_params = {
+        'host': os.getenv('POSTGRES_HOST', 'localhost'),
+        'port': os.getenv('POSTGRES_PORT', '5432'),
+        'database': os.getenv('POSTGRES_DB', 'drugs_db'),
+        'user': os.getenv('POSTGRES_USER', 'postgres'),
+        'password': os.getenv('POSTGRES_PASSWORD', 'postgres')
+    }
+    
+    # Create PostgreSQL connection
+    conn = None
+    cursor = None
+    try:
+        conn = psycopg2.connect(**db_params)
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Start transaction
+        conn.autocommit = False
+        
+        # Extract unique labelers from structured_items_json_array
+        unique_labelers = set()
+        for structured_item in structured_items_json_array:
+            labeler_name = structured_item.get('labeler', 'Unknown')
+            unique_labelers.add(labeler_name)
+
+        print(f'Unique labelers: {unique_labelers}')
+        
+        # Upsert unique labelers to the labelers table
+        labeler_upsert_query = """
+            INSERT INTO labelers (name, created_at, updated_at) 
+            VALUES (%s, NOW(), NOW())
+            ON CONFLICT DO NOTHING;
+        """
+        
+        for labeler_name in unique_labelers:
+            cursor.execute(labeler_upsert_query, (labeler_name,))
+        
+        print(f"Successfully upserted {len(unique_labelers)} unique labelers")
+        
+        # Extract and upsert tags from q_items
+        print("Extracting and upserting tags...")
+        
+        # Define tag categories and their corresponding q_item fields
+        tag_categories = {
+            "conditions": "tags_condition",
+            "substances": "tags_substance", 
+            "indications": "tags_indications",
+            "strengths_concentrations": "tags_strengths_concentrations",
+            "populations": "tags_population",
+            "contraindications": "tags_contraindications",
+        }
+        
+        # Collect all unique tags
+        all_tags = set()
+        
+        for q_item in q_items:
+            # Extract tags from each category
+            for category, field_name in tag_categories.items():
+                if field_name in q_item and q_item[field_name]:
+                    tags = q_item[field_name]
+                    for tag in tags['tags']:
+                        if tag:
+                            all_tags.add((tag.strip(), category))
+        
+        # Upsert tags to the tags table
+        tag_upsert_query = """
+            INSERT INTO tags (name, category, created_at, updated_at) 
+            VALUES (%s, %s, NOW(), NOW())
+            ON CONFLICT (name) DO NOTHING;
+        """
+        
+        for tag_name, category in all_tags:
+            cursor.execute(tag_upsert_query, (tag_name, category))
+        
+        print(f"Successfully upserted {len(all_tags)} unique tags")
+        
+        # Get a map of tag ID to name for all tags
+        tag_id_map_query = "SELECT id, name FROM tags"
+        cursor.execute(tag_id_map_query)
+        tag_results = cursor.fetchall()
+        
+        # Create a map of tag name to ID for easy lookup
+        tag_name_to_id_map = {tag['name']: tag['id'] for tag in tag_results}
+        
+        print(f"Created tag map with {len(tag_name_to_id_map)} tags")
+        
+        # Process each item using indexes to access all arrays
+        for i in range(len(structured_items_json_array)):
+            structured_item = structured_items_json_array[i]
+            q_item = q_items[i]
+            view_blocks = view_blocks_array[i]
+
+            print(f'Upserting {structured_item["drugName"]}...')
+            
+            # Extract labeler information (assuming it's in the structured item)
+            labeler_name = structured_item.get('labeler', 'Unknown')
+            
+            # Get the labeler ID from the labelers table based on name
+            labeler_query = "SELECT id FROM labelers WHERE name = %s"
+            cursor.execute(labeler_query, (labeler_name,))
+            labeler_result = cursor.fetchone()
+            
+            labeler_id = labeler_result['id']
+            
+            # Prepare drug data using q_items for most fields
+            drug_id = q_item.get('setId')
+            drug_name = q_item.get('drugName', '')
+            generic_name = q_item['label'].get('genericName', '')
+            product_type = q_item['label'].get('productType', '')
+            effective_time_raw = q_item['label'].get('effectiveTime', '')
+            # Ensure the format is 9999-99-99 (YYYY-MM-DD)
+            if effective_time_raw and len(effective_time_raw) == 8 and effective_time_raw.isdigit():
+                effective_time = f"{effective_time_raw[:4]}-{effective_time_raw[4:6]}-{effective_time_raw[6:8]}"
+            else:
+                effective_time = ''
+            title = q_item['label'].get('title')
+            slug = q_item.get('slug')
+
+            # Extract various sections from q_items
+            indications_and_usage = q_item['label'].get('indicationsAndUsage', None)
+            dosage_and_administration = q_item['label'].get('dosageAndAdministration', None)
+            dosage_forms_and_strengths = q_item['label'].get('dosageFormsAndStrengths', None)
+            warnings_and_precautions = q_item['label'].get('warningsAndPrecautions', None)
+            adverse_reactions = q_item['label'].get('adverseReactions', None)
+            clinical_pharmacology = q_item['label'].get('clinicalPharmacology', None)
+            clinical_studies = q_item['label'].get('clinicalStudies', None)
+            how_supplied = q_item['label'].get('howSupplied', None)
+            use_in_specific_populations = q_item['label'].get('useInSpecificPopulations', None)
+            description = q_item['label'].get('description', None)
+            nonclinical_toxicology = q_item['label'].get('nonclinicalToxicology', None)
+            instructions_for_use = q_item['label'].get('instructionsForUse', None)
+            mechanism_of_action = q_item['label'].get('mechanismOfAction', None)
+            contraindications = q_item['label'].get('contraindications', None)
+            boxed_warning = q_item['label'].get('boxedWarning', None)
+            meta_description = q_item.get('metaDescription', None)
+            
+            # Extract AI-generated fields
+            ai_warnings = q_item.get('warnings', None)
+            ai_dosing = q_item.get('dosing', None)
+            ai_use_and_conditions = q_item.get('useAndConditions', None)
+            ai_contraindications = q_item.get('contraIndications', None)
+            ai_description = q_item.get('description', None)
+
+            # Use structured_item for highlights and blocks_json
+            highlights = json.dumps(structured_item['label'].get('highlights', '{}'))
+            blocks_json = json.dumps(structured_item.get('label', {}))
+            
+            # Deconstruct view_blocks into individual fields
+            meta_description_blocks = json.dumps(view_blocks.get('metaDescription', []))
+            description_blocks = json.dumps(view_blocks.get('description', []))
+            use_and_conditions_blocks = json.dumps(view_blocks.get('useAndConditions', []))
+            contra_indications_blocks = json.dumps(view_blocks.get('contraIndications', []))
+            warning_blocks = json.dumps(view_blocks.get('warnings', []))
+            dosing_blocks = json.dumps(view_blocks.get('dosing', []))
+
+            # Insert drug record
+            drug_insert_query = """
+                INSERT INTO drugs (
+                    id, name, generic_name, product_type, effective_time, title, slug,
+                    labeler_id, indications_and_usage, dosage_and_administration,
+                    dosage_forms_and_strengths, warnings_and_precautions, adverse_reactions,
+                    clinical_pharmacology, clinical_studies, how_supplied,
+                    use_in_specific_populations, description, nonclinical_toxicology,
+                    instructions_for_use, mechanism_of_action, contraindications,
+                    boxed_warning, meta_description, ai_warnings, ai_dosing, ai_use_and_conditions, ai_contraindications, ai_description, highlights, blocks_json, meta_description_blocks, description_blocks, use_and_conditions_blocks, contra_indications_blocks, warning_blocks, dosing_blocks, created_at, updated_at
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+                ) ON CONFLICT (id) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    generic_name = EXCLUDED.generic_name,
+                    product_type = EXCLUDED.product_type,
+                    effective_time = EXCLUDED.effective_time,
+                    title = EXCLUDED.title,
+                    slug = EXCLUDED.slug,
+                    labeler_id = EXCLUDED.labeler_id,
+                    indications_and_usage = EXCLUDED.indications_and_usage,
+                    dosage_and_administration = EXCLUDED.dosage_and_administration,
+                    dosage_forms_and_strengths = EXCLUDED.dosage_forms_and_strengths,
+                    warnings_and_precautions = EXCLUDED.warnings_and_precautions,
+                    adverse_reactions = EXCLUDED.adverse_reactions,
+                    clinical_pharmacology = EXCLUDED.clinical_pharmacology,
+                    clinical_studies = EXCLUDED.clinical_studies,
+                    how_supplied = EXCLUDED.how_supplied,
+                    use_in_specific_populations = EXCLUDED.use_in_specific_populations,
+                    description = EXCLUDED.description,
+                    nonclinical_toxicology = EXCLUDED.nonclinical_toxicology,
+                    instructions_for_use = EXCLUDED.instructions_for_use,
+                    mechanism_of_action = EXCLUDED.mechanism_of_action,
+                    contraindications = EXCLUDED.contraindications,
+                    boxed_warning = EXCLUDED.boxed_warning,
+                    meta_description = EXCLUDED.meta_description,
+                    ai_warnings = EXCLUDED.ai_warnings,
+                    ai_dosing = EXCLUDED.ai_dosing,
+                    ai_use_and_conditions = EXCLUDED.ai_use_and_conditions,
+                    ai_contraindications = EXCLUDED.ai_contraindications,
+                    ai_description = EXCLUDED.ai_description,
+                    highlights = EXCLUDED.highlights,
+                    blocks_json = EXCLUDED.blocks_json,
+                    meta_description_blocks = EXCLUDED.meta_description_blocks,
+                    description_blocks = EXCLUDED.description_blocks,
+                    use_and_conditions_blocks = EXCLUDED.use_and_conditions_blocks,
+                    contra_indications_blocks = EXCLUDED.contra_indications_blocks,
+                    warning_blocks = EXCLUDED.warning_blocks,
+                    dosing_blocks = EXCLUDED.dosing_blocks,
+                    updated_at = NOW();
+            """
+
+            cursor.execute(
+                drug_insert_query,
+                (
+                    drug_id,
+                    drug_name,
+                    generic_name,
+                    product_type,
+                    effective_time,
+                    title,
+                    slug,
+                    labeler_id,
+                    indications_and_usage,
+                    dosage_and_administration,
+                    dosage_forms_and_strengths,
+                    warnings_and_precautions,
+                    adverse_reactions,
+                    clinical_pharmacology,
+                    clinical_studies,
+                    how_supplied,
+                    use_in_specific_populations,
+                    description,
+                    nonclinical_toxicology,
+                    instructions_for_use,
+                    mechanism_of_action,
+                    contraindications,
+                    boxed_warning,
+                    meta_description,
+                    ai_warnings,
+                    ai_dosing,
+                    ai_use_and_conditions,
+                    ai_contraindications,
+                    ai_description,
+                    highlights,
+                    blocks_json,
+                    meta_description_blocks,
+                    description_blocks,
+                    use_and_conditions_blocks,
+                    contra_indications_blocks,
+                    warning_blocks,
+                    dosing_blocks
+                )
+            )
+            
+            # Create drug-tag relationships
+            drug_tags = set()
+            
+            # Extract tags for this specific drug
+            q_item = q_items[i]
+            for category, field_name in tag_categories.items():
+                if field_name in q_item and q_item[field_name]:
+                    tag_list = q_item[field_name]
+                    for tag in tag_list['tags']:
+                        if tag:
+                            drug_tags.add((drug_id, tag.strip(), category))
+            
+            # Get current drug-tag relationships for this drug
+            current_drug_tags_query = """
+                SELECT dt.tag_id, t.name 
+                FROM drug_tags dt 
+                JOIN tags t ON dt.tag_id = t.id 
+                WHERE dt.drug_id = %s
+            """
+            cursor.execute(current_drug_tags_query, (drug_id,))
+            current_drug_tags = cursor.fetchall()
+            current_tag_ids = {row['tag_id'] for row in current_drug_tags}
+            
+            # Convert new tags to tag IDs
+            new_tag_ids = set()
+            for drug_id, tag_name, category in drug_tags:
+                if tag_name in tag_name_to_id_map:
+                    tag_id = tag_name_to_id_map[tag_name]
+                    new_tag_ids.add(tag_id)
+                else:
+                    print(f"Warning: Tag '{tag_name}' not found in tag map")
+            
+            # Remove tags that are no longer present
+            tags_to_remove = current_tag_ids - new_tag_ids
+            if tags_to_remove:
+                remove_drug_tags_query = """
+                    DELETE FROM drug_tags 
+                    WHERE drug_id = %s AND tag_id = ANY(%s)
+                """
+                cursor.execute(remove_drug_tags_query, (drug_id, list(tags_to_remove)))
+                print(f"Removed {len(tags_to_remove)} old tags for drug {drug_id}")
+            
+            # Insert new drug-tag relationships
+            tags_to_add = new_tag_ids - current_tag_ids
+            if tags_to_add:
+                drug_tag_insert_query = """
+                    INSERT INTO drug_tags (drug_id, tag_id, created_at) 
+                    VALUES (%s, %s, NOW())
+                """
+                
+                for tag_id in tags_to_add:
+                    cursor.execute(drug_tag_insert_query, (drug_id, tag_id))
+                
+                print(f"Added {len(tags_to_add)} new tags for drug {drug_id}")
+
+        # Commit the entire transaction
+        conn.commit()
+        print(f"Successfully inserted/updated {len(structured_items_json_array)} drug records")
+
+    except psycopg2.Error as e:
+        print(f"Error connecting to PostgreSQL: {e}")
+        if conn:
+            conn.rollback()
+        return
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        if conn:
+            conn.rollback()
+        return
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
