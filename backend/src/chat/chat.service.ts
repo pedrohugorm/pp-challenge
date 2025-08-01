@@ -1,14 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
-import { ChatCompletionTool } from 'openai/resources/chat/completions/completions';
+import {
+  ChatCompletionMessage,
+  ChatCompletionTool,
+} from 'openai/resources/chat/completions/completions';
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { pipeline, env } from '@xenova/transformers';
+import { pipeline, env, FeatureExtractionPipeline } from '@xenova/transformers';
 
 @Injectable()
 export class ChatService {
   private openai: OpenAI;
   private qdrantClient: QdrantClient;
-  private embeddingPipeline: any;
+  private embeddingPipeline: FeatureExtractionPipeline | null;
 
   constructor() {
     this.openai = new OpenAI({
@@ -30,9 +33,12 @@ export class ChatService {
       // Set environment to use local models
       env.allowLocalModels = true;
       env.allowRemoteModels = false;
-      
+
       // Load the all-MiniLM-L6-v2 model
-      this.embeddingPipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+      this.embeddingPipeline = await pipeline(
+        'feature-extraction',
+        'Xenova/all-MiniLM-L6-v2',
+      );
       console.log('Embedding pipeline initialized successfully');
     } catch (error) {
       console.error('Error initializing embedding pipeline:', error);
@@ -51,7 +57,7 @@ export class ChatService {
         normalize: true,
       });
 
-      return Array.from(result.data);
+      return Array.from(result.data as any);
     } catch (error) {
       console.error('Error generating embedding:', error);
       throw error;
@@ -68,7 +74,7 @@ export class ChatService {
     try {
       // Ensure embedding pipeline is ready
       await this.ensureEmbeddingPipelineReady();
-      
+
       // Generate embedding using all-MiniLM-L6-v2
       const queryVector = await this.generateEmbedding(args.userPrompt);
 
@@ -82,7 +88,7 @@ export class ChatService {
 
       console.log('Medical data search results:', searchResults);
 
-      return searchResults.map(result => ({
+      return searchResults.map((result) => ({
         id: result.id,
         score: result.score,
         payload: result.payload,
@@ -93,18 +99,18 @@ export class ChatService {
     }
   }
 
-  async chat(prompt: string): Promise<string[]> {
+  async chat(prompt: string): Promise<ChatCompletionMessage[]> {
     // Ensure embedding pipeline is initialized
     await this.ensureEmbeddingPipelineReady();
 
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4.1',
       messages: [{ role: 'user', content: prompt }],
-      tools,
+      tools: getTools(),
       store: true,
     });
 
-    let result = [response.choices[0].message.content!];
+    const result = [response.choices[0].message];
     if (
       response.choices[0].message.tool_calls &&
       response.choices[0].message.tool_calls.length > 0
@@ -125,7 +131,7 @@ export class ChatService {
   }
 }
 
-const tools: ChatCompletionTool[] = [
+const getTools = () => ([
   {
     type: 'function',
     function: {
@@ -142,8 +148,8 @@ const tools: ChatCompletionTool[] = [
       },
       strict: true,
     },
-  },
-];
+  } as ChatCompletionTool,
+]);
 
 interface SearchMedicalDataRequest {
   userPrompt: string;
