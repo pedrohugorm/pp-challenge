@@ -77,8 +77,7 @@ def upsert_q_items_to_qdrant(q_items: list[dict], collection_name: str = "drug_d
                 "instructionsForUse": item['label'].get('instructionsForUse', None),
                 "mechanismOfAction": item['label'].get('mechanismOfAction', None),
                 "contraindications": item['label'].get('contraindications', None),
-                "boxedWarning": item['label'].get('boxedWarning', None),
-                "item": item
+                "boxedWarning": item['label'].get('boxedWarning', None)
             }
         )
         points.append(point)
