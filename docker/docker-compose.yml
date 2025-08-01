@@ -82,6 +82,7 @@ services:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_NAMESPACE=default
       - TASK_QUEUE=sample-task-queue
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     networks:
       - temporal-network
     restart: unless-stopped

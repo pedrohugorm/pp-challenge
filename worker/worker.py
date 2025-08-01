@@ -12,8 +12,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-async def main():
-    """Main function to run the Temporal worker."""
+async def run_temporal_worker():
     # Connect to Temporal server
     client = await Client.connect(
         os.getenv("TEMPORAL_ADDRESS", "localhost:7233"),
@@ -36,4 +35,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(run_temporal_worker()) 
