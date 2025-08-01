@@ -21,9 +21,17 @@ export class ChatService {
 
   private async searchMedicalData(args: SearchMedicalDataRequest) {
     try {
-      // Search Qdrant using built-in embedding
+      // Convert text to vector using OpenAI embeddings
+      const embeddingResponse = await this.openai.embeddings.create({
+        model: 'text-embedding-ada-002',
+        input: args.userPrompt,
+      });
+
+      const queryVector = embeddingResponse.data[0].embedding;
+
+      // Search Qdrant using vector search
       const searchResults = await this.qdrantClient.search('drug_data', {
-        query: args.userPrompt,
+        vector: queryVector,
         limit: 10,
         with_payload: true,
         score_threshold: 0.7,
@@ -94,4 +102,3 @@ const tools: ChatCompletionTool[] = [
 interface SearchMedicalDataRequest {
   userPrompt: string;
 }
-
