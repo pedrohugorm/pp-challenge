@@ -1,10 +1,9 @@
-import json
 import os
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 from sentence_transformers import SentenceTransformer
 
-def upsert_q_items_to_qdrant(q_items, collection_name: str = "drug_data"):
+def upsert_q_items_to_qdrant(q_items: list[dict], collection_name: str = "drug_data"):
     """
     Upsert q_items to Qdrant with embeddings for each field separately.
     
@@ -37,43 +36,48 @@ def upsert_q_items_to_qdrant(q_items, collection_name: str = "drug_data"):
     points = []
     for i, item in enumerate(q_items):
         
-        # item['label']['indicationsAndUsage'] = embedding_model.encode(item['label']['indicationsAndUsage'].strip())
-        # item['label']['dosageAndAdministration'] = embedding_model.encode(item['label']['dosageAndAdministration'].strip())
-        # item['label']['dosageFormsAndStrengths'] = embedding_model.encode(item['label']['dosageFormsAndStrengths'].strip())
-        # item['label']['warningsAndPrecautions'] = embedding_model.encode(item['label']['warningsAndPrecautions'].strip())
-        # item['label']['adverseReactions'] = embedding_model.encode(item['label']['adverseReactions'].strip())
-        # item['label']['clinicalPharmacology'] = embedding_model.encode(item['label']['clinicalPharmacology'].strip())
-        # item['label']['clinicalStudies'] = embedding_model.encode(item['label']['clinicalStudies'].strip())
-        # item['label']['howSupplied'] = embedding_model.encode(item['label']['howSupplied'].strip())
-        # item['label']['useInSpecificPopulations'] = embedding_model.encode(item['label']['useInSpecificPopulations'].strip())
-        # item['label']['description'] = embedding_model.encode(item['label']['description'].strip())
-        # item['label']['nonclinicalToxicology'] = embedding_model.encode(item['label']['nonclinicalToxicology'].strip())
-        # item['label']['nonclinicainstructionsForUselToxicology'] = embedding_model.encode(item['label']['instructionsForUse'].strip())
-        # item['label']['mechanismOfAction'] = embedding_model.encode(item['label']['mechanismOfAction'].strip())
-        # item['label']['contraindications'] = embedding_model.encode(item['label']['contraindications'].strip())
-        # item['label']['boxedWarning'] = embedding_model.encode(item['label']['boxedWarning'].strip())
-        # item['label']['highlights']['dosageAndAdministration'] = embedding_model.encode(item['label']['highlights']['dosageAndAdministration'].strip())
+        # Concatenate relevant fields into one variable
+        concatenated_text = " ".join([
+            str(item['label'].get('indicationsAndUsage', '')).strip(),
+            str(item['label'].get('dosageAndAdministration', '')).strip(),
+            str(item['label'].get('dosageFormsAndStrengths', '')).strip(),
+            str(item['label'].get('warningsAndPrecautions', '')).strip(),
+            str(item['label'].get('adverseReactions', '')).strip(),
+            str(item['label'].get('clinicalPharmacology', '')).strip(),
+            str(item['label'].get('clinicalStudies', '')).strip(),
+            str(item['label'].get('howSupplied', '')).strip(),
+            str(item['label'].get('useInSpecificPopulations', '')).strip(),
+            str(item['label'].get('description', '')).strip(),
+            str(item['label'].get('nonclinicalToxicology', '')).strip(),
+            str(item['label'].get('instructionsForUse', '')).strip(),
+            str(item['label'].get('mechanismOfAction', '')).strip(),
+            str(item['label'].get('contraindications', '')).strip(),
+            str(item['label'].get('boxedWarning', '')).strip(),
+            str(item['label'].get('highlights', {}).get('dosageAndAdministration', '')).strip()
+        ])
+
+        embedding = embedding_model.encode(concatenated_text).tolist()
 
         point = PointStruct(
             id=item['setId'],
-            vector={},
+            vector=embedding,
             payload={
                 "item_id": i,
-                "indicationsAndUsage": item['label']['indicationsAndUsage'],
-                "dosageAndAdministration": item['label']['dosageAndAdministration'],
-                "dosageFormsAndStrengths": item['label']['dosageFormsAndStrengths'],
-                "warningsAndPrecautions": item['label']['warningsAndPrecautions'],
-                "adverseReactions": item['label']['adverseReactions'],
-                "clinicalPharmacology": item['label']['clinicalPharmacology'],
-                "clinicalStudies": item['label']['clinicalStudies'],
-                "howSupplied": item['label']['howSupplied'],
-                "useInSpecificPopulations": item['label']['useInSpecificPopulations'],
-                "description": item['label']['description'],
-                "nonclinicalToxicology": item['label']['nonclinicalToxicology'],
-                "nonclinicainstructionsForUselToxicology": item['label']['instructionsForUse'],
-                "mechanismOfAction": item['label']['mechanismOfAction'],
-                "contraindications": item['label']['contraindications'],
-                "boxedWarning": item['label']['boxedWarning'],
+                "indicationsAndUsage": item['label'].get('indicationsAndUsage', None),
+                "dosageAndAdministration": item['label'].get('dosageAndAdministration', None),
+                "dosageFormsAndStrengths": item['label'].get('dosageFormsAndStrengths', None),
+                "warningsAndPrecautions": item['label'].get('warningsAndPrecautions', None),
+                "adverseReactions": item['label'].get('adverseReactions', None),
+                "clinicalPharmacology": item['label'].get('clinicalPharmacology', None),
+                "clinicalStudies": item['label'].get('clinicalStudies', None),
+                "howSupplied": item['label'].get('howSupplied', None),
+                "useInSpecificPopulations": item['label'].get('useInSpecificPopulations', None),
+                "description": item['label'].get('description', None),
+                "nonclinicalToxicology": item['label'].get('nonclinicalToxicology', None),
+                "instructionsForUse": item['label'].get('instructionsForUse', None),
+                "mechanismOfAction": item['label'].get('mechanismOfAction', None),
+                "contraindications": item['label'].get('contraindications', None),
+                "boxedWarning": item['label'].get('boxedWarning', None),
                 "item": item
             }
         )
