@@ -20,7 +20,7 @@ def upsert_q_items_to_qdrant(q_items: list[dict], collection_name: str = "drug_d
     
     # Initialize embedding model
     embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-    vector_size = 384
+    vector_size = 2048
     
     # Create collection if it doesn't exist
     try:
