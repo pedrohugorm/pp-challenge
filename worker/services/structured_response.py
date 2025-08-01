@@ -6,8 +6,8 @@ import os
 
 from .rate_limiter import get_rate_limiter
 
+
 async def get_structured_response(schema_class: Type[BaseModel], system_prompt: str, user_prompt: str):
-    
     model = "gpt-4o-mini"
 
     rate_limiter = get_rate_limiter(model)
