@@ -1,0 +1,56 @@
+[
+  {
+    "drugName": "Emgality",
+    "genericName": "galcanezumab-gnlm",
+    "companyName": "Eli Lilly and Company",
+    "indications": [
+      "EMGALITY is indicated for the preventive treatment of migraine in adults.",
+      "EMGALITY is indicated for the treatment of episodic cluster headache in adults."
+    ],
+    "contraindications": [
+      "EMGALITY is contraindicated in patients with serious hypersensitivity to galcanezumab-gnlm or to any of the excipients."
+    ],
+    "dosing": [
+      {
+        "group": "adults",
+        "amount": "240 mg",
+        "details": "(two consecutive subcutaneous injections of 120 mg each)",
+        "frequency": "once as a loading dose, followed by monthly doses",
+        "route": "subcutaneous"
+      },
+      {
+        "group": "adults",
+        "amount": "300 mg",
+        "details": "(three consecutive subcutaneous injections of 100 mg each)",
+        "frequency": "at the onset of the cluster period, and then monthly until the end of the cluster period.",
+        "route": "subcutaneous"
+      }
+    ],
+    "administration": "Subcutaneous use only. Administer in the abdomen, thigh, back of the upper arm, or buttocks subcutaneously.",
+    "warnings": [
+      "Hypersensitivity reactions, including dyspnea, urticaria, and rash, have occurred with EMGALITY in clinical studies and the postmarketing setting. Cases of anaphylaxis and angioedema have also been reported in the postmarketing setting. If a serious or severe hypersensitivity reaction occurs, discontinue administration of EMGALITY and initiate appropriate therapy."
+    ],
+    "manufacturer": "Eli Lilly and Company",
+    "sideEffects": [
+      "Injection site reactions"
+    ],
+    "adverseReactions": [
+      "Hypersensitivity Reactions"
+    ],
+    "interactions": [
+      "Galcanezumab-gnlm is not metabolized by cytochrome P450 enzymes; therefore, interactions with concomitant medications that are substrates, inducers, or inhibitors of cytochrome P450 enzymes are unlikely."
+    ],
+    "approvalDate": "2021-03-11",
+    "rxNormCode": null,
+    "ndcCodes": [
+      "0002-1436-11",
+      "0002-1436-27",
+      "0002-3115-09",
+      "0002-2377-11",
+      "0002-2377-27"
+    ],
+    "atcCode": null,
+    "emaId": null,
+    "confidenceScore": 95.0
+  }
+]
