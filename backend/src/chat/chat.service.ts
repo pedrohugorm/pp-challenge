@@ -2,11 +2,13 @@ import { Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
 import { ChatCompletionTool } from 'openai/resources/chat/completions/completions';
 import { QdrantClient } from '@qdrant/js-client-rest';
+import { pipeline, env } from '@xenova/transformers';
 
 @Injectable()
 export class ChatService {
   private openai: OpenAI;
   private qdrantClient: QdrantClient;
+  private embeddingPipeline: any;
 
   constructor() {
     this.openai = new OpenAI({
@@ -17,17 +19,58 @@ export class ChatService {
       url: process.env.QDRANT_URL || 'http://localhost:6333',
       apiKey: process.env.QDRANT_API_KEY,
     });
+
+    // Initialize the embedding pipeline with all-MiniLM-L6-v2
+    // Note: This is async, so we'll initialize it lazily when needed
+    this.embeddingPipeline = null;
+  }
+
+  private async initializeEmbeddingPipeline() {
+    try {
+      // Set environment to use local models
+      env.allowLocalModels = true;
+      env.allowRemoteModels = false;
+      
+      // Load the all-MiniLM-L6-v2 model
+      this.embeddingPipeline = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+      console.log('Embedding pipeline initialized successfully');
+    } catch (error) {
+      console.error('Error initializing embedding pipeline:', error);
+      throw error;
+    }
+  }
+
+  private async generateEmbedding(text: string): Promise<number[]> {
+    try {
+      if (!this.embeddingPipeline) {
+        throw new Error('Embedding pipeline not initialized');
+      }
+
+      const result = await this.embeddingPipeline(text, {
+        pooling: 'mean',
+        normalize: true,
+      });
+
+      return Array.from(result.data);
+    } catch (error) {
+      console.error('Error generating embedding:', error);
+      throw error;
+    }
+  }
+
+  private async ensureEmbeddingPipelineReady(): Promise<void> {
+    if (!this.embeddingPipeline) {
+      await this.initializeEmbeddingPipeline();
+    }
   }
 
   private async searchMedicalData(args: SearchMedicalDataRequest) {
     try {
-      // Convert text to vector using OpenAI embeddings
-      const embeddingResponse = await this.openai.embeddings.create({
-        model: 'text-embedding-ada-002',
-        input: args.userPrompt,
-      });
-
-      const queryVector = embeddingResponse.data[0].embedding;
+      // Ensure embedding pipeline is ready
+      await this.ensureEmbeddingPipelineReady();
+      
+      // Generate embedding using all-MiniLM-L6-v2
+      const queryVector = await this.generateEmbedding(args.userPrompt);
 
       // Search Qdrant using vector search
       const searchResults = await this.qdrantClient.search('drug_data', {
@@ -51,6 +94,9 @@ export class ChatService {
   }
 
   async chat(prompt: string): Promise<string[]> {
+    // Ensure embedding pipeline is initialized
+    await this.ensureEmbeddingPipelineReady();
+
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4.1',
       messages: [{ role: 'user', content: prompt }],

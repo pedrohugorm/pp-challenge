@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:${POSTGRESQL_VERSION}
+    image: postgres:15
     container_name: postgres
     environment:
       POSTGRES_USER: postgres
@@ -17,7 +17,7 @@ services:
     environment:
       POSTGRES_PASSWORD: temporal
       POSTGRES_USER: temporal
-    image: postgres:${POSTGRESQL_VERSION}
+    image: postgres:15
     networks:
       - temporal-network
     ports:
@@ -45,12 +45,12 @@ services:
     depends_on:
       - postgresql
     environment:
-      - DB=postgresql
+      - DB=postgres12
       - DB_PORT=5432
       - POSTGRES_USER=temporal
       - POSTGRES_PWD=temporal
       - POSTGRES_SEEDS=postgresql
-    image: temporalio/auto-setup:${TEMPORAL_VERSION}
+    image: temporalio/auto-setup:latest
     networks:
       - temporal-network
     ports:
@@ -68,7 +68,7 @@ services:
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CLI_ADDRESS=temporal:7233
-    image: temporalio/admin-tools:${TEMPORAL_VERSION}
+    image: temporalio/admin-tools:latest
     networks:
       - temporal-network
     stdin_open: true
@@ -80,7 +80,7 @@ services:
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CORS_ORIGINS=http://localhost:3000
-    image: temporalio/ui:${TEMPORAL_UI_VERSION}
+    image: temporalio/ui:latest
     networks:
       - temporal-network
     ports:

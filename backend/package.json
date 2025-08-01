@@ -27,6 +27,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@qdrant/js-client-rest": "^1.15.0",
     "@rekog/mcp-nest": "^1.7.2",
+    "@xenova/transformers": "^2.17.2",
     "openai": "^5.11.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
