@@ -165,7 +165,7 @@ const EmbedMedication = ({ contents }: { contents: (string | BlockContent | Embe
     
     return (
         <a 
-            href={`/medication/${medicationData.slug}`} 
+            href={`/medications/${medicationData.slug}`} 
             className="text-blue-600 hover:text-blue-800 underline font-medium !text-blue-600 block mb-2"
         >
             {medicationData.name}

@@ -73,4 +73,31 @@ export class MedicationsService {
       hasMore,
     };
   }
+
+  async getMedicationBySlug(slug: string) {
+    const medication = await this.prisma.drug.findUnique({
+      where: {
+        slug: slug,
+      },
+      select: {
+        id: true,
+        name: true,
+        generic_name: true,
+        product_type: true,
+        effective_time: true,
+        title: true,
+        slug: true,
+        updated_at: true,
+        blocks_json: true,
+        labeler: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    return medication;
+  }
 }
