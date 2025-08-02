@@ -7,8 +7,8 @@ import {
 import { z } from 'zod';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import {
-  SearchMedicalDataService,
   SearchMedicalDataRequest,
+  SearchMedicalDataService,
 } from './search-medical-data.service';
 
 export const MedicationSchema = z.object({
@@ -35,6 +35,11 @@ export type MedicationListResponse = z.infer<
   typeof MedicationListResponseSchema
 >;
 
+type ChatCompletion = Omit<ChatCompletionMessage, 'role'> & {
+  tool_call_id?: string;
+  role: any;
+};
+
 @Injectable()
 export class ChatService {
   private openai: OpenAI;
@@ -47,10 +52,7 @@ export class ChatService {
     });
   }
 
-  async chat(
-    prompt: string,
-    context: ChatCompletionMessage[],
-  ): Promise<ChatResponse> {
+  async chat(prompt: string, context: ChatCompletion[]): Promise<ChatResponse> {
     const CONTEXT_SIZE = 10;
 
     const response = await this.openai.chat.completions.create({
@@ -102,13 +104,29 @@ export class ChatService {
               ),
             });
 
-            result = [...result, reviewResult.choices[0].message];
+            const reviewToolResult: ChatCompletion = {
+              ...reviewResult.choices[0].message,
+              tool_call_id: tool.id,
+              role: 'tool',
+            };
+            result = [...result, reviewToolResult];
           }
         }
       }
+
+      return convertResultToChatMessage(result);
     }
 
-    return convertResultToChatMessage(result);
+    return {
+      context: [...context, response.choices[0].message],
+      blocks: [
+        {
+          role: 'assistant',
+          contents: [response.choices[0].message.content || ''],
+          type: 'p',
+        },
+      ],
+    };
   }
 }
 
@@ -120,11 +138,11 @@ interface Blocks {
 
 export interface ChatResponse {
   blocks: Blocks[];
-  context: ChatCompletionMessage[];
+  context: ChatCompletion[];
 }
 
 const convertResultToChatMessage = (
-  chatCompletions: ChatCompletionMessage[],
+  chatCompletions: ChatCompletion[],
 ): ChatResponse => {
   let blocks: Blocks[] = [];
 

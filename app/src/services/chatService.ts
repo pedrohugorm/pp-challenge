@@ -25,8 +25,8 @@ export interface ContextItem {
     role: string;
     content: string | null;
     tool_calls?: ToolCall[];
-    refusal: string | null;
-    annotations: any[];
+    refusal?: string | null;
+    annotations?: any[];
 }
 
 export interface ChatResponse {
