@@ -47,10 +47,18 @@ export class ChatService {
     });
   }
 
-  async chat(prompt: string): Promise<ChatResponse> {
+  async chat(
+    prompt: string,
+    context: ChatCompletionMessage[],
+  ): Promise<ChatResponse> {
+    const CONTEXT_SIZE = 10;
+
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4.1-mini',
       messages: [
+        ...(context.length > CONTEXT_SIZE
+          ? context.slice(-CONTEXT_SIZE)
+          : context),
         { role: 'system', content: getSearchPrompt() },
         { role: 'user', content: prompt },
       ],
@@ -111,6 +119,7 @@ interface Blocks {
 
 export interface ChatResponse {
   blocks: Blocks[];
+  context: ChatCompletionMessage[];
 }
 
 const convertResultToChatMessage = (
@@ -147,7 +156,7 @@ const convertResultToChatMessage = (
     ];
   }
 
-  return { blocks };
+  return { blocks, context: chatCompletions };
 };
 
 const getTools = () => [
