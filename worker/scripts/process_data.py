@@ -45,7 +45,7 @@ async def main():
 
     upsert_q_items_to_chromadb(q_items)
 
-    upsert_items_to_postgres(q_items, structured_items_json_array)
+    # upsert_items_to_postgres(q_items, structured_items_json_array)
 
     print("Function executed successfully!")
 

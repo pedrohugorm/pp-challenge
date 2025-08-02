@@ -1,5 +1,23 @@
 import os
 import chromadb
+from tiktoken import get_encoding
+from typing import List
+
+# Constants
+MAX_TOKENS = 300  # Target chunk size
+ENCODING = get_encoding("cl100k_base")  # same as GPT-4 and gpt-3.5-turbo
+
+def chunk_text(text: str, max_tokens: int) -> List[str]:
+    """Split text into token-limited chunks."""
+    tokens = ENCODING.encode(text)
+    chunks = []
+    start = 0
+    while start < len(tokens):
+        end = start + max_tokens
+        chunk = ENCODING.decode(tokens[start:end])
+        chunks.append(chunk)
+        start = end
+    return chunks
 
 def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug_data"):
     """
@@ -9,10 +27,12 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
         q_items: List of processed items to upsert
         collection_name: Name of the ChromaDB collection
     """
-    
+
     # Initialize ChromaDB client
     chroma_host = os.getenv("CHROMA_HOST", "localhost")
     chroma_port = os.getenv("CHROMA_PORT", "8000")
+
+    print(f'Starting Chroma DB pipeline {chroma_host}:{chroma_port}')
 
     client = chromadb.HttpClient(
         host=chroma_host,
@@ -39,6 +59,7 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
             raise
     
     # Prepare data for ChromaDB
+    total_chunks = 0
     ids = []
     documents = []
     metadatas = []
@@ -68,36 +89,51 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
         metadata = {}
         if item.get('setId') is not None:
             metadata["item_id"] = item.get('setId')
+            metadata['name'] = item.get('drugName')
         for key in [
-            "indicationsAndUsage",
-            "dosageAndAdministration",
-            "dosageFormsAndStrengths",
-            "warningsAndPrecautions",
-            "adverseReactions",
-            "clinicalPharmacology",
-            "clinicalStudies",
-            "howSupplied",
-            "useInSpecificPopulations",
-            "description",
-            "nonclinicalToxicology",
-            "instructionsForUse",
-            "mechanismOfAction",
-            "contraindications",
-            "boxedWarning"
+            # "indicationsAndUsage",
+            # "dosageAndAdministration",
+            # "dosageFormsAndStrengths",
+            # "warningsAndPrecautions",
+            # "adverseReactions",
+            # "clinicalPharmacology",
+            # "clinicalStudies",
+            # "howSupplied",
+            # "useInSpecificPopulations",
+            # "description",
+            # "nonclinicalToxicology",
+            # "instructionsForUse",
+            # "mechanismOfAction",
+            # "contraindications",
+            # "boxedWarning"
         ]:
             value = item['label'].get(key, None)
             if value is not None:
                 metadata[key] = value
         
-        ids.append(str(item['setId']))
-        documents.append(concatenated_text)
-        metadatas.append(metadata)
+        # Chunk the concatenated text
+        chunks = chunk_text(concatenated_text, MAX_TOKENS)
+        
+        # Add each chunk with the same id and metadata
+        for idx, chunk in enumerate(chunks):
+            chunk_id = f"{item['setId']}:chunk:{idx}"
+            ids.append(chunk_id)
+            documents.append(chunk)
+            metadatas.append(metadata)
+
+        print(f'Upserting {len(ids)} items to ChromaDB')
+
+        # Upsert to ChromaDB
+        collection.upsert(
+            ids=ids,
+            documents=documents,
+            metadatas=metadatas
+        )
+
+        total_chunks += len(ids)
+        print(f'Upserted {len(ids)} chunks')
+        ids = []
+        documents = []
+        metadatas = []
     
-    # Upsert to ChromaDB
-    collection.upsert(
-        ids=ids,
-        documents=documents,
-        metadatas=metadatas
-    )
-    
-    print(f"Successfully upserted {len(q_items)} items to ChromaDB collection: {collection_name}") 
+    print(f"Successfully upserted {total_chunks} chunks from {len(q_items)} items to ChromaDB collection: {collection_name}")

@@ -73,7 +73,7 @@ export class ChatService {
             const medications = searchResult.map((r) => ({
               id: r.id,
               name: r.payload['drugName'] as string,
-              field: r.payload[args.field] as string,
+              chunk: r.chunk,
             }));
 
             const confirmationResult =

@@ -10,6 +10,7 @@ export interface SearchResult {
   id: string;
   score: number;
   payload: Record<string, any>;
+  chunk: string;
 }
 
 @Injectable()
@@ -44,6 +45,7 @@ export class SearchMedicalDataService {
         id: id,
         score: 1 - (searchResults.distances?.[0]?.[index] || 0), // Convert distance to similarity score
         payload: searchResults.metadatas?.[0]?.[index] || {},
+        chunk: searchResults.documents?.[0]?.[index] || '',
       }));
     } catch (error) {
       console.error('Error searching medical data:', error);
