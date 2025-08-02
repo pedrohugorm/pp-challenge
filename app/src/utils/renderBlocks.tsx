@@ -60,7 +60,7 @@ export function renderBlock({block, headerOffset}: RenderBlockProps): React.Reac
     // Validate that type is a valid block type for fallback
     const validBlockTypes = [
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'strong', 'em',
-        'ul', 'ol', 'li', 'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'mark', 'embed-medication'
+        'ul', 'ol', 'li', 'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'mark', 'embed-medication', '[document]'
     ];
 
     if (!validBlockTypes.includes(type)) {
@@ -166,6 +166,11 @@ const EmbedMedication = ({contents}: { contents: (string | BlockContent | EmbedM
     );
 };
 
+// Document component
+const Document = ({children}: { children: React.ReactNode }) => {
+    return <div className="medication-document">{children}</div>;
+};
+
 // Component map
 const getComponentMap = (headerOffset: number): Record<string, React.ComponentType<any>> => ({
     'h1': ({children}: { children: React.ReactNode }) => <Header level={1 + headerOffset}>{children}</Header>,
@@ -192,7 +197,8 @@ const getComponentMap = (headerOffset: number): Record<string, React.ComponentTy
     'code': ({children}: { children: React.ReactNode }) => <Mark format="code">{children}</Mark>,
     'mark': ({children}: { children: React.ReactNode }) => <Mark format="mark">{children}</Mark>,
     'embed-medication': ({contents}: { contents: (string | BlockContent | EmbedMedicationData)[] }) => <EmbedMedication
-        contents={contents}/>
+        contents={contents}/>,
+    '[document]': ({children}: { children: React.ReactNode }) => <Document>{children}</Document>
 });
 
 // Utility function to render multiple blocks
@@ -200,6 +206,8 @@ export function renderBlocks(blocks: BlockContent[], headerOffset: number): Reac
     if (!blocks) {
         return [];
     }
+
+    console.log(blocks);
 
     return blocks.map((block, index) =>
         React.createElement(React.Fragment, {key: index}, renderBlock({block, headerOffset}))
