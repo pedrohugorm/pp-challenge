@@ -90,6 +90,7 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
         if item.get('setId') is not None:
             metadata["item_id"] = item.get('setId')
             metadata['name'] = item.get('drugName')
+            metadata['slug'] = item.get('slug')
         for key in [
             # "indicationsAndUsage",
             # "dosageAndAdministration",

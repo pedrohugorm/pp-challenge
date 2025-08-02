@@ -11,14 +11,15 @@ import {
   SearchMedicalDataRequest,
 } from './search-medical-data.service';
 
-export const ItemSchema = z.object({
+export const MedicationSchema = z.object({
   id: z.string({ description: 'id of the medication' }),
   name: z.string({ description: 'name of the medication' }),
+  slug: z.string({ description: 'slug of the medication' }),
 });
 
-export type Item = z.infer<typeof ItemSchema>;
+export type Medication = z.infer<typeof MedicationSchema>;
 
-export const MedicationListSchema = z.array(ItemSchema);
+export const MedicationListSchema = z.array(MedicationSchema);
 
 export type MedicationList = z.infer<typeof MedicationListSchema>;
 
@@ -46,7 +47,7 @@ export class ChatService {
     });
   }
 
-  async chat(prompt: string): Promise<ChatCompletionMessage[]> {
+  async chat(prompt: string): Promise<ChatResponse> {
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4.1-mini',
       messages: [
@@ -73,35 +74,81 @@ export class ChatService {
             const medications = searchResult.map((r) => ({
               id: r.payload['item_id'] as string,
               name: r.payload['drugName'] as string,
+              slug: r.payload['slug'] as string,
               chunk: r.chunk,
             }));
 
-            const confirmationResult =
-              await this.openai.chat.completions.create({
-                model: 'gpt-4o-mini',
-                messages: [
-                  {
-                    role: 'system',
-                    content: getConfirmationPrompt(JSON.stringify(medications)),
-                  },
-                  { role: 'user', content: getConfirmationUserPrompt(prompt) },
-                ],
-                store: true,
-                response_format: zodResponseFormat(
-                  MedicationListResponseSchema,
-                  'medications',
-                ),
-              });
+            const reviewResult = await this.openai.chat.completions.create({
+              model: 'gpt-4o-mini',
+              messages: [
+                {
+                  role: 'system',
+                  content: getReviewPrompt(JSON.stringify(medications)),
+                },
+                { role: 'user', content: getReviewUserPrompt(prompt) },
+              ],
+              store: true,
+              response_format: zodResponseFormat(
+                MedicationListResponseSchema,
+                'medications',
+              ),
+            });
 
-            result = [...result, confirmationResult.choices[0].message];
+            result = [...result, reviewResult.choices[0].message];
           }
         }
       }
     }
 
-    return result;
+    return convertResultToChatMessage(result);
   }
 }
+
+interface Blocks {
+  type: 'p' | 'embed-medication';
+  contents: (Medication | string)[];
+}
+
+export interface ChatResponse {
+  blocks: Blocks[];
+}
+
+const convertResultToChatMessage = (
+  chatCompletions: ChatCompletionMessage[],
+): ChatResponse => {
+  let blocks: Blocks[] = [];
+
+  for (const message of chatCompletions) {
+    if (message.tool_calls) {
+      continue;
+    }
+
+    if (!message.content) {
+      blocks = [
+        ...blocks,
+        {
+          type: 'p',
+          contents: ['Something went wrong. I could not find any information.'],
+        },
+      ];
+      continue;
+    }
+
+    const medicationList: MedicationListResponse = JSON.parse(
+      message.content,
+    ) as MedicationListResponse;
+
+    blocks = [
+      ...blocks,
+      {
+        type: 'p',
+        contents: [medicationList.reasoning, ...medicationList.medications],
+      },
+    ];
+  }
+
+  return { blocks };
+};
 
 const getTools = () => [
   {
@@ -111,33 +158,11 @@ const getTools = () => [
       description: 'Searches for medication data by the user prompt.',
       parameters: {
         type: 'object',
-        required: ['userPrompt', 'field'],
+        required: ['userPrompt'],
         properties: {
           userPrompt: {
             type: 'string',
             description: 'the medication info the user is looking for',
-          },
-          field: {
-            type: 'string',
-            description: 'the specific field of medication data to search for',
-            enum: [
-              'name',
-              'indicationsAndUsage',
-              'dosageAndAdministration',
-              'dosageFormsAndStrengths',
-              'warningsAndPrecautions',
-              'adverseReactions',
-              'clinicalPharmacology',
-              'clinicalStudies',
-              'howSupplied',
-              'useInSpecificPopulations',
-              'description',
-              'nonclinicalToxicology',
-              'instructionsForUse',
-              'mechanismOfAction',
-              'contraindications',
-              'boxedWarning',
-            ],
           },
         },
         additionalProperties: false,
@@ -153,7 +178,7 @@ const getSearchPrompt = () => {
   `;
 };
 
-const getConfirmationPrompt = (searchResults: string) => {
+const getReviewPrompt = (searchResults: string) => {
   return `Your task is to read the search results list below against a user prompt and ONLY include the items that are relevant to what the user asked on your response.
   Do not mention that there were other search results.
   Do not mention search result items that are not relevant. 
@@ -164,7 +189,7 @@ const getConfirmationPrompt = (searchResults: string) => {
   `;
 };
 
-const getConfirmationUserPrompt = (userPrompt: string) => {
+const getReviewUserPrompt = (userPrompt: string) => {
   return `## BEGIN USER PROMPT:
   ${userPrompt}
   ## END USER PROMPT
