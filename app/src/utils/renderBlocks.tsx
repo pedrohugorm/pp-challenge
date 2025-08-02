@@ -76,7 +76,7 @@ const Header = ({ level, children }: { level: number; children: React.ReactNode 
 
 // Paragraph component
 const Paragraph = ({ children }: { children: React.ReactNode }) => {
-    return <p className="text-gray-600 leading-relaxed mb-4">{children}</p>;
+    return <p className="leading-relaxed mb-4">{children}</p>;
 };
 
 // List component with type handling

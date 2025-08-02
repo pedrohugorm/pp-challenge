@@ -3,11 +3,32 @@ import ChatBalloon, { ChatBlock } from './ChatBalloon';
 
 export default function MedicationAssistant() {
     const [chatBlocks, setChatBlocks] = useState<ChatBlock[]>([]);
+    const [messageText, setMessageText] = useState('');
 
     const assistantMessage: ChatBlock = {
         type: 'p',
         contents: ["Hello! I'm here to help you with medication information. How can I assist you today?"],
         role: 'assistant'
+    };
+
+    const handleSend = () => {
+        if (messageText.trim()) {
+            const userBlock: ChatBlock = {
+                type: 'p',
+                contents: [messageText.trim()],
+                role: 'user'
+            };
+            
+            setChatBlocks(prev => [...prev, userBlock]);
+            setMessageText('');
+        }
+    };
+
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
     };
 
     return (
@@ -34,9 +55,13 @@ export default function MedicationAssistant() {
                         placeholder="Type your message..."
                         className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         rows={3}
+                        value={messageText}
+                        onChange={(e) => setMessageText(e.target.value)}
+                        onKeyPress={handleKeyPress}
                     />
                     <button
                         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        onClick={handleSend}
                     >
                         Send
                     </button>
