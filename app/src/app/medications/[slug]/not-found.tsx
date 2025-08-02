@@ -9,7 +9,7 @@ export default function NotFound() {
                         Medication Not Found
                     </h1>
                     <p className="text-gray-600 mb-6">
-                        The medication you're looking for doesn't exist or has been removed.
+                        The medication you&apos;re looking for doesn&#39;t exist or has been removed.
                     </p>
                     <Link 
                         href="/"

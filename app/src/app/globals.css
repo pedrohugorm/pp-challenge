@@ -23,3 +23,50 @@ body {
 .chat-balloon p a {
   margin-top: 0.5rem;
 }
+
+/* Medication document styling cleanup */
+.medication-document ul {
+  @apply list-disc list-inside mb-3 mt-3;
+}
+
+.medication-document li {
+  @apply mb-1;
+}
+
+.medication-document table {
+  @apply w-full border-collapse border border-gray-300 mb-3 mt-3;
+}
+
+.medication-document table tr,
+.medication-document table td,
+.medication-document table th {
+  @apply border border-gray-300 p-2;
+}
+
+.medication-document p {
+  @apply text-base leading-relaxed mb-3 mt-3;
+}
+
+.medication-document h1 {
+  @apply text-4xl font-bold mb-4 mt-4;
+}
+
+.medication-document h2 {
+  @apply text-3xl font-bold mb-4 mt-4;
+}
+
+.medication-document h3 {
+  @apply text-2xl font-semibold mb-3 mt-3;
+}
+
+.medication-document h4 {
+  @apply text-xl font-semibold mb-2 mt-2;
+}
+
+.medication-document h5 {
+  @apply text-lg font-medium mb-2 mt-2;
+}
+
+.medication-document h6 {
+  @apply text-base font-medium mb-1 mt-1;
+}

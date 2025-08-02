@@ -1,7 +1,4 @@
-export interface Block {
-    type: string;
-    contents: (string | Block)[];
-}
+import {BlockContent} from "@/utils/renderBlocks";
 
 export interface Medication {
     id: string;
@@ -10,15 +7,11 @@ export interface Medication {
     frequency: string;
     time: string;
     notes?: string;
-    blocks_json: Record<string, Block[]>;
+    blocks_json: Record<string, BlockContent[]>;
 }
 
 export interface MedicationResponse {
     medications: Medication[];
-}
-
-export interface SingleMedicationResponse {
-    medication: Medication;
 }
 
 import {getBackendUrl} from '@/utils/getBackendUrl';
@@ -39,7 +32,7 @@ export async function fetchMedications(): Promise<MedicationResponse> {
     }
 }
 
-export async function fetchMedicationBySlug(slug: string): Promise<SingleMedicationResponse> {
+export async function fetchMedicationBySlug(slug: string): Promise<Medication> {
     try {
         const response = await fetch(`${getBackendUrl()}/medications/${slug}`);
 
@@ -47,7 +40,7 @@ export async function fetchMedicationBySlug(slug: string): Promise<SingleMedicat
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        return await response.json();
+        return  await response.json();
     } catch (error) {
         console.error('Error fetching medication by slug:', error);
         throw error;

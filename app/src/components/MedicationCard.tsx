@@ -28,7 +28,7 @@ export default function MedicationCard({ medication }: MedicationCardProps) {
                     {medication.notes && (
                         <p><span className="font-medium">Notes:</span> {medication.notes}</p>
                     )}
-                    <RenderBlocks blocks={[medication.blocks_json.description[1]]} />
+                    <RenderBlocks blocks={[medication.blocks_json.description[1]]} headerOffset={0} />
                 </div>
             </div>
         </Link>

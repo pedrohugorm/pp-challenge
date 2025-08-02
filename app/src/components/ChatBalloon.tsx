@@ -19,7 +19,7 @@ export default function ChatBalloon({ block }: ChatBalloonProps) {
                     ? 'bg-blue-500 text-white' 
                     : 'bg-gray-100 text-gray-800'
             } [&_a]:block [&_a]:px-3 [&_a]:py-1.5 [&_a]:bg-gray-200 [&_a]:text-gray-700 [&_a]:rounded-md [&_a]:text-sm [&_a]:font-medium [&_a]:no-underline [&_a]:mb-2 [&_a]:last:mb-0 [&_a]:text-center [&_a:hover]:bg-gray-300 [&_a:hover]:text-gray-800`}>
-                {renderBlocks([block])}
+                {renderBlocks([block], 0)}
             </div>
         </div>
     );

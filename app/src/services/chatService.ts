@@ -1,9 +1,9 @@
 import { ChatBlock } from '@/components/ChatBalloon';
-import { getBackendUrl } from '../utils/getBackendUrl';
+import { getBackendUrl } from '@/utils/getBackendUrl';
 
 export interface ChatRequest {
     userPrompt: string;
-    context: any[];
+    context: ContextItem[];
 }
 
 export interface MedicationReference {
@@ -26,7 +26,6 @@ export interface ContextItem {
     content: string | null;
     tool_calls?: ToolCall[];
     refusal?: string | null;
-    annotations?: any[];
 }
 
 export interface ChatResponse {
