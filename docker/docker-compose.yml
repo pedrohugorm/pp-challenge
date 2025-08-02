@@ -42,18 +42,6 @@ services:
         target: /chroma/chroma
     restart: unless-stopped
 
-  chromadb-admin:
-    container_name: chromadb-admin
-    image: fengzhichao/chromadb-admin:latest
-    ports:
-      - "3001:3001"
-    environment:
-      - CHROMA_SERVER_HOST=chromadb
-      - CHROMA_SERVER_HTTP_PORT=8000
-    depends_on:
-      - chromadb
-    restart: unless-stopped
-
 volumes:
   postgres_data:
     driver: local
