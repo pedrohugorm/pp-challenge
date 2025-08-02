@@ -36,8 +36,56 @@ $ npm install
 Create a `.env` file in the root directory with the following variables:
 
 ```bash
+# Database
+DATABASE_URL="postgresql://postgres:password@localhost:5432/drugs_db?schema=public"
+
+# OpenAI
 OPENAI_API_KEY=your_openai_api_key_here
-CHROMA_URL=http://localhost:8000  # Optional, defaults to localhost:8000
+
+# ChromaDB (Optional, defaults to localhost:8000)
+CHROMA_URL=http://localhost:8000
+```
+
+**Note**: You'll need to:
+1. Create a PostgreSQL database named `drugs_db`
+2. Update the username/password in the DATABASE_URL if different from `postgres:password`
+3. Make sure PostgreSQL is running on localhost:5432
+
+## Database Setup
+
+This project uses Prisma as the ORM with PostgreSQL. Follow these steps to set up the database:
+
+### 1. Install Dependencies
+```bash
+$ npm install
+```
+
+### 2. Set up Environment Variables
+Create a `.env` file with your database connection string (see Environment Variables section above).
+
+### 3. Generate Prisma Client
+```bash
+$ npm run db:generate
+```
+
+### 4. Run Database Migrations
+```bash
+# Create and apply migrations
+$ npm run db:migrate
+
+# Deploy migrations to production
+$ npm run db:migrate:deploy
+
+# Reset database (development only)
+$ npm run db:migrate:reset
+
+# Check migration status
+$ npm run db:migrate:status
+```
+
+### 5. Open Prisma Studio (Optional)
+```bash
+$ npm run db:studio
 ```
 
 ## Compile and run the project

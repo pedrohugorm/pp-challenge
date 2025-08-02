@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from scripts.clean_json_html import clean_json_html
 from scripts.structure_json_html import structure_json_html
 from scripts.prepare_item_for_qdrant import prepare_item_for_qdrant
-from scripts.upsert_to_qdrant import upsert_q_items_to_qdrant
 from scripts.upsert_to_chromadb import upsert_q_items_to_chromadb
 
 # Load environment variables from .env file in the parent directory (project root)
@@ -33,7 +32,6 @@ async def main():
 
             structured_item = structure_json_html(item)
             q_item = prepare_item_for_qdrant(item)
-            # structured_item_json = json.dumps(structured_item, ensure_ascii=False, indent=2)
 
             structured_items_json_array.append(structured_item)
             q_items.append(q_item)
@@ -45,7 +43,6 @@ async def main():
     with open("./data/q_items.json", "w", encoding="utf-8") as outfile:
         json.dump(q_items, outfile, ensure_ascii=False, indent=2)
 
-    # upsert_q_items_to_qdrant(q_items)
     upsert_q_items_to_chromadb(q_items)
 
     print("Function executed successfully!")

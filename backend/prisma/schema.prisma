@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Labeler {
+  id         String   @id @default(cuid())
+  name       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  drugs Drug[]
+
+  @@map("labelers")
+}
+
+model Drug {
+  id                          String    @id @default(cuid())
+  name                        String
+  generic_name                String?
+  product_type                String?
+  effective_time              DateTime?
+  title                       String?
+  slug                        String    @unique
+  labeler_id                  String
+  indications_and_usage       String?
+  dosage_and_administration   String?
+  dosage_forms_and_strengths  String?
+  warnings_and_precautions    String?
+  adverse_reactions           String?
+  clinical_pharmacology       String?
+  clinical_studies            String?
+  how_supplied                String?
+  use_in_specific_populations String?
+  description                 String?
+  nonclinical_toxicology      String?
+  instructions_for_use        String?
+  mechanism_of_action         String?
+  contraindications           String?
+  boxed_warning               String?
+  highlights                  Json?
+  blocks_json                 Json?
+  created_at                  DateTime  @default(now())
+  updated_at                  DateTime  @updatedAt
+
+  labeler Labeler @relation(fields: [labeler_id], references: [id])
+
+  @@map("drugs")
+}
