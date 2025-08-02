@@ -1,13 +1,6 @@
 import React from 'react';
-
-interface Medication {
-    id: string;
-    name: string;
-    dosage: string;
-    frequency: string;
-    time: string;
-    notes?: string;
-}
+import { type Medication } from '../services/medicationService';
+import { RenderBlocks } from '../utils/renderBlocks';
 
 interface MedicationCardProps {
     medication: Medication;
@@ -30,6 +23,7 @@ export default function MedicationCard({ medication }: MedicationCardProps) {
                 {medication.notes && (
                     <p><span className="font-medium">Notes:</span> {medication.notes}</p>
                 )}
+                <RenderBlocks blocks={medication.blocks_json.description} />
             </div>
         </div>
     );

@@ -1,69 +1,33 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import MedicationCard from '../components/MedicationCard';
 import MedicationAssistant from '../components/MedicationAssistant';
 import MedicationHeader from '../components/MedicationHeader';
-
-interface Medication {
-    id: string;
-    name: string;
-    dosage: string;
-    frequency: string;
-    time: string;
-    notes?: string;
-}
-
-const sampleMedications: Medication[] = [
-    {
-        id: '1',
-        name: 'Aspirin',
-        dosage: '100mg',
-        frequency: 'Once daily',
-        time: 'Morning',
-        notes: 'Take with food'
-    },
-    {
-        id: '2',
-        name: 'Vitamin D',
-        dosage: '1000 IU',
-        frequency: 'Once daily',
-        time: 'Morning',
-        notes: 'Take with breakfast'
-    },
-    {
-        id: '3',
-        name: 'Metformin',
-        dosage: '500mg',
-        frequency: 'Twice daily',
-        time: 'Morning & Evening',
-        notes: 'Take with meals'
-    },
-    {
-        id: '4',
-        name: 'Lisinopril',
-        dosage: '10mg',
-        frequency: 'Once daily',
-        time: 'Morning',
-        notes: 'Take on empty stomach'
-    },
-    {
-        id: '5',
-        name: 'Atorvastatin',
-        dosage: '20mg',
-        frequency: 'Once daily',
-        time: 'Evening',
-        notes: 'Take with dinner'
-    },
-    {
-        id: '6',
-        name: 'Omeprazole',
-        dosage: '20mg',
-        frequency: 'Once daily',
-        time: 'Morning',
-        notes: 'Take 30 minutes before breakfast'
-    }
-];
+import { fetchMedications, type Medication } from '../services/medicationService';
 
 export default function Home() {
+    const [medications, setMedications] = useState<Medication[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const loadMedications = async () => {
+            try {
+                setLoading(true);
+                const data = await fetchMedications();
+                setMedications(data.medications);
+                setError(null);
+            } catch (err) {
+                setError('Failed to load medications');
+                console.error('Error loading medications:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadMedications();
+    }, []);
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="flex h-screen">
@@ -71,11 +35,31 @@ export default function Home() {
                 <div className="flex-1 flex flex-col">
                     <MedicationHeader />
                     <div className="flex-1 p-4 lg:p-6 overflow-y-auto">
-                        <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4 lg:gap-6">
-                            {sampleMedications.map((med: Medication) => (
-                                <MedicationCard key={med.id} medication={med} />
-                            ))}
-                        </div>
+                        {loading && (
+                            <div className="flex justify-center items-center h-64">
+                                <div className="text-gray-500">Loading medications...</div>
+                            </div>
+                        )}
+                        
+                        {error && (
+                            <div className="flex justify-center items-center h-64">
+                                <div className="text-red-500">{error}</div>
+                            </div>
+                        )}
+                        
+                        {!loading && !error && medications.length === 0 && (
+                            <div className="flex justify-center items-center h-64">
+                                <div className="text-gray-500">No medications found</div>
+                            </div>
+                        )}
+                        
+                        {!loading && !error && medications.length > 0 && (
+                            <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4 lg:gap-6">
+                                {medications.map((med: Medication) => (
+                                    <MedicationCard key={med.id} medication={med} />
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
