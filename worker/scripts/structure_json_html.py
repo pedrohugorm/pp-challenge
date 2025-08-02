@@ -22,8 +22,13 @@ def parse_element_to_dict(element):
 
     result = {
         "type": element.name,
-        "contents": []
+        "contents": [],
+        "attrs": {}
     }
+    
+    # Add all attributes to attrs dictionary
+    if element.attrs:
+        result["attrs"] = dict(element.attrs)
 
     # Process all children
     for child in element.children:

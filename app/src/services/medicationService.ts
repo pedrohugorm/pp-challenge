@@ -3,10 +3,12 @@ import {BlockContent} from "@/utils/renderBlocks";
 export interface Medication {
     id: string;
     name: string;
-    dosage: string;
-    frequency: string;
-    time: string;
-    notes?: string;
+    generic_name: string;
+    slug: string;
+    product_type: string;
+    effective_time: Date;
+    labeler: { name: string },
+    description: string;
     blocks_json: Record<string, BlockContent[]>;
 }
 
@@ -34,13 +36,15 @@ export async function fetchMedications(): Promise<MedicationResponse> {
 
 export async function fetchMedicationBySlug(slug: string): Promise<Medication> {
     try {
-        const response = await fetch(`${getBackendUrl()}/medications/${slug}`);
+        const response = await fetch(`${getBackendUrl()}/medications/${slug}`, {
+            next: { revalidate: 3600 } // Cache for 1 hour
+        });
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        return  await response.json();
+        return await response.json();
     } catch (error) {
         console.error('Error fetching medication by slug:', error);
         throw error;

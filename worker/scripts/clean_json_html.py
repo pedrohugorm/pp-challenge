@@ -23,8 +23,12 @@ def traverse_and_clean(node):
         for child in list(node.children):
             traverse_and_clean(child)
 
-        # Remove attributes
-        node.attrs.clear()
+        # Remove attributes except colspan and rowspan
+        if node.attrs:
+            attrs_to_remove = [attr for attr in list(node.attrs.keys()) 
+                              if attr not in ['colspan', 'rowspan']]
+            for attr in attrs_to_remove:
+                del node.attrs[attr]
 
         # Replace <a> with text
         if node.name == "a":

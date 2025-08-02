@@ -10,10 +10,6 @@ const MedicationHeader: React.FC<MedicationHeaderProps> = ({ title = "Medication
             className="text-2xl lg:text-3xl font-bold font-sans text-white px-4 py-3 flex items-center gap-3"
             style={{ backgroundColor: '#355B72' }}
         >
-            <image
-                from="/images/logo.jpg"
-                className="h-8 w-8 object-cover rounded border-2 border-white"
-            />
             {title}
         </div>
     );

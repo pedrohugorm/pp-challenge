@@ -82,6 +82,7 @@ export class MedicationsService {
       select: {
         id: true,
         name: true,
+        description: true,
         generic_name: true,
         product_type: true,
         effective_time: true,

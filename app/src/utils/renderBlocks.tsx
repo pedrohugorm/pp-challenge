@@ -6,9 +6,12 @@ export interface EmbedMedicationData {
     slug: string;
 }
 
+type KnownAttrs = {colspan: number};
+
 export interface BlockContent {
     type: string;
     contents: (string | BlockContent | EmbedMedicationData)[];
+    attrs?: KnownAttrs;
 }
 
 interface RenderBlockProps {
@@ -21,7 +24,7 @@ export function renderBlock({block, headerOffset}: RenderBlockProps): React.Reac
 
     // Process contents recursively
     const children: React.ReactNode[] = [];
-    const componentMap = getComponentMap(headerOffset);
+    const componentMap = getComponentMap(block, headerOffset);
 
     contents.forEach((content, index) => {
         if (typeof content === 'string') {
@@ -116,10 +119,10 @@ const TableRow = ({children}: { children: React.ReactNode }) => {
 };
 
 // Table cell component
-const TableCell = ({isHeader, children}: { isHeader?: boolean; children: React.ReactNode }) => {
+const TableCell = ({isHeader, children, colSpan}: { isHeader?: boolean; children: React.ReactNode, colSpan: number }) => {
     return isHeader ?
-        <th>{children}</th> :
-        <td>{children}</td>;
+        <th colSpan={colSpan}>{children}</th> :
+        <td colSpan={colSpan}>{children}</td>;
 };
 
 // Link component
@@ -168,11 +171,11 @@ const EmbedMedication = ({contents}: { contents: (string | BlockContent | EmbedM
 
 // Document component
 const Document = ({children}: { children: React.ReactNode }) => {
-    return <div className="medication-document">{children}</div>;
+    return <div className="medication-section">{children}</div>;
 };
 
 // Component map
-const getComponentMap = (headerOffset: number): Record<string, React.ComponentType<any>> => ({
+const getComponentMap = (block: BlockContent, headerOffset: number): Record<string, React.ComponentType<any>> => ({
     'h1': ({children}: { children: React.ReactNode }) => <Header level={1 + headerOffset}>{children}</Header>,
     'h2': ({children}: { children: React.ReactNode }) => <Header level={2 + headerOffset}>{children}</Header>,
     'h3': ({children}: { children: React.ReactNode }) => <Header level={3 + headerOffset}>{children}</Header>,
@@ -189,8 +192,8 @@ const getComponentMap = (headerOffset: number): Record<string, React.ComponentTy
     'tfoot': ({children}: { children: React.ReactNode }) => <>{children}</>,
     'caption': ({children}: { children: React.ReactNode }) => <caption>{children}</caption>,
     'tr': ({children}: { children: React.ReactNode }) => <TableRow>{children}</TableRow>,
-    'th': ({children}: { children: React.ReactNode }) => <TableCell isHeader>{children}</TableCell>,
-    'td': ({children}: { children: React.ReactNode }) => <TableCell>{children}</TableCell>,
+    'th': ({children}: { children: React.ReactNode }) => <TableCell colSpan={(block.attrs ? block.attrs['colspan'] : 0)} isHeader>{children}</TableCell>,
+    'td': ({children}: { children: React.ReactNode }) => <TableCell colSpan={(block.attrs ? block.attrs['colspan'] : 0)}>{children}</TableCell>,
     'a': ({children}: { children: React.ReactNode }) => <Link>{children}</Link>,
     'strong': ({children}: { children: React.ReactNode }) => <Mark format="strong">{children}</Mark>,
     'em': ({children}: { children: React.ReactNode }) => <Mark format="em">{children}</Mark>,
@@ -206,8 +209,6 @@ export function renderBlocks(blocks: BlockContent[], headerOffset: number): Reac
     if (!blocks) {
         return [];
     }
-
-    console.log(blocks);
 
     return blocks.map((block, index) =>
         React.createElement(React.Fragment, {key: index}, renderBlock({block, headerOffset}))
