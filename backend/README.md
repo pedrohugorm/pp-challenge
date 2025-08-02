@@ -23,12 +23,21 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository with ChromaDB vector search integration for medical data queries.
 
 ## Project setup
 
 ```bash
 $ npm install
+```
+
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```bash
+OPENAI_API_KEY=your_openai_api_key_here
+CHROMA_URL=http://localhost:8000  # Optional, defaults to localhost:8000
 ```
 
 ## Compile and run the project

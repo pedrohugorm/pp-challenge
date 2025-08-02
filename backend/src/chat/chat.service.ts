@@ -4,13 +4,13 @@ import {
   ChatCompletionMessage,
   ChatCompletionTool,
 } from 'openai/resources/chat/completions/completions';
-import { QdrantClient } from '@qdrant/js-client-rest';
+import { ChromaClient } from 'chromadb';
 import { z } from 'zod';
 import { zodResponseFormat } from 'openai/helpers/zod';
 
 export const ItemSchema = z.object({
-  id: z.string(),
-  name: z.string(),
+  id: z.string({ description: 'id of the medication' }),
+  name: z.string({ description: 'name of the medication' }),
 });
 
 export type Item = z.infer<typeof ItemSchema>;
@@ -19,97 +19,53 @@ export const MedicationListSchema = z.array(ItemSchema);
 
 export type MedicationList = z.infer<typeof MedicationListSchema>;
 
+export const MedicationListResponseSchema = z.object({
+  medications: MedicationListSchema,
+  reasoning: z.string({
+    description:
+      'Message on why the medication list was selected in a polite conversational tone for the user.',
+  }),
+});
+
+export type MedicationListResponse = z.infer<
+  typeof MedicationListResponseSchema
+>;
+
 @Injectable()
 export class ChatService {
   private openai: OpenAI;
-  private qdrantClient: QdrantClient;
-  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-  private embeddingPipeline: any | null;
+  private chromaClient: ChromaClient;
 
   constructor() {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    this.qdrantClient = new QdrantClient({
-      url: process.env.QDRANT_URL || 'http://localhost:6333',
-      apiKey: process.env.QDRANT_API_KEY,
+    this.chromaClient = new ChromaClient({
+      path: process.env.CHROMA_URL || 'http://localhost:8000',
     });
-
-    // Initialize the embedding pipeline with all-MiniLM-L6-v2
-    // Note: This is async, so we'll initialize it lazily when needed
-    this.embeddingPipeline = null;
-  }
-
-  private async initializeEmbeddingPipeline() {
-    try {
-      // Dynamically import the transformers package
-      const { pipeline, env } = await import('@xenova/transformers');
-
-      // Allow remote models to be downloaded if not available locally
-      env.allowLocalModels = true;
-      env.allowRemoteModels = true;
-
-      // Load the all-MiniLM-L6-v2 model
-      this.embeddingPipeline = await pipeline(
-        'feature-extraction',
-        'Xenova/all-MiniLM-L6-v2',
-      );
-      console.log('Embedding pipeline initialized successfully');
-    } catch (error) {
-      console.error('Error initializing embedding pipeline:', error);
-      throw error;
-    }
-  }
-
-  private async generateEmbedding(text: string): Promise<number[]> {
-    try {
-      if (!this.embeddingPipeline) {
-        throw new Error('Embedding pipeline not initialized');
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-call
-      const result = await this.embeddingPipeline(text, {
-        pooling: 'mean',
-        normalize: true,
-      });
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
-      return Array.from(result.data);
-    } catch (error) {
-      console.error('Error generating embedding:', error);
-      throw error;
-    }
-  }
-
-  private async ensureEmbeddingPipelineReady(): Promise<void> {
-    if (!this.embeddingPipeline) {
-      await this.initializeEmbeddingPipeline();
-    }
   }
 
   private async searchMedicalData(args: SearchMedicalDataRequest) {
     try {
-      // Ensure embedding pipeline is ready
-      await this.ensureEmbeddingPipelineReady();
+      // Get or create the collection
+      const collection = await this.chromaClient.getOrCreateCollection({
+        name: 'drug_data',
+      });
 
-      // Generate embedding using all-MiniLM-L6-v2
-      const queryVector = await this.generateEmbedding(args.userPrompt);
-
-      // Search Qdrant using vector search
-      const searchResults = await this.qdrantClient.search('drug_data', {
-        vector: queryVector,
-        limit: 10,
-        with_payload: true,
-        score_threshold: 0.2,
+      // Search ChromaDB using text query (ChromaDB handles embeddings automatically)
+      const searchResults = await collection.query({
+        queryTexts: [args.userPrompt],
+        nResults: 10,
       });
 
       console.log('Medical data search results:', searchResults);
 
-      return searchResults.map((result) => ({
-        id: result.id,
-        score: result.score,
-        payload: result.payload,
+      // Transform results to match the expected format
+      return searchResults.ids[0].map((id, index) => ({
+        id: id,
+        score: 1 - (searchResults.distances?.[0]?.[index] || 0), // Convert distance to similarity score
+        payload: searchResults.metadatas?.[0]?.[index] || {},
       }));
     } catch (error) {
       console.error('Error searching medical data:', error);
@@ -118,9 +74,6 @@ export class ChatService {
   }
 
   async chat(prompt: string): Promise<ChatCompletionMessage[]> {
-    // Ensure embedding pipeline is initialized
-    await this.ensureEmbeddingPipelineReady();
-
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4.1',
       messages: [
@@ -145,7 +98,7 @@ export class ChatService {
             const searchResult = await this.searchMedicalData(args);
             const medications = searchResult.map((r) => ({
               id: r.id,
-              field: r.payload![args.field],
+              field: r.payload[args.field],
             }));
 
             const confirmationResult =
@@ -158,10 +111,9 @@ export class ChatService {
                   },
                   { role: 'user', content: getConfirmationUserPrompt(prompt) },
                 ],
-                tools: getTools(),
                 store: true,
                 response_format: zodResponseFormat(
-                  MedicationListSchema,
+                  MedicationListResponseSchema,
                   'medications',
                 ),
               });

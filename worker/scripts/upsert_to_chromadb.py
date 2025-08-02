@@ -12,19 +12,32 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
     """
     
     # Initialize ChromaDB client
-    client = chromadb.Client(Settings(
-        chroma_server_host=os.getenv("CHROMA_HOST", "localhost"),
-        chroma_server_http_port=int(os.getenv("CHROMA_PORT", "8000")),
-        chroma_server_ssl_enabled=False
-    ))
+    chroma_host = os.getenv("CHROMA_HOST", "localhost")
+    chroma_port = os.getenv("CHROMA_PORT", "8000")
+
+    client = chromadb.HttpClient(
+        host=chroma_host,
+        port=int(chroma_port),
+        ssl=False
+    )
+    print(f'Chroma DB: {client.database}')
+    print(f'Chroma Tenant: {client.tenant}')
     
-    # Get or create collection
+    # Get or create collection (uses default all-MiniLM-L6-v2 embeddings)
     try:
+        print(f'Collection List: {client.list_collections()}')
         collection = client.get_collection(name=collection_name)
         print(f"Using existing collection: {collection_name}")
-    except:
-        collection = client.create_collection(name=collection_name)
-        print(f"Created new collection: {collection_name}")
+    except Exception as e:
+        # Check if the error is specifically about collection not found
+        print(e)
+        if "not found" in str(e).lower() or "does not exist" in str(e).lower():
+            collection = client.create_collection(name=collection_name)
+            print(f"Created new collection: {collection_name}")
+        else:
+            # Re-raise other exceptions (connection issues, auth problems, etc.)
+            print(f"Error accessing ChromaDB: {e}")
+            raise
     
     # Prepare data for ChromaDB
     ids = []
@@ -53,24 +66,29 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
         ])
 
         # Prepare metadata
-        metadata = {
-            "item_id": item.get('setId'),
-            "indicationsAndUsage": item['label'].get('indicationsAndUsage', None),
-            "dosageAndAdministration": item['label'].get('dosageAndAdministration', None),
-            "dosageFormsAndStrengths": item['label'].get('dosageFormsAndStrengths', None),
-            "warningsAndPrecautions": item['label'].get('warningsAndPrecautions', None),
-            "adverseReactions": item['label'].get('adverseReactions', None),
-            "clinicalPharmacology": item['label'].get('clinicalPharmacology', None),
-            "clinicalStudies": item['label'].get('clinicalStudies', None),
-            "howSupplied": item['label'].get('howSupplied', None),
-            "useInSpecificPopulations": item['label'].get('useInSpecificPopulations', None),
-            "description": item['label'].get('description', None),
-            "nonclinicalToxicology": item['label'].get('nonclinicalToxicology', None),
-            "instructionsForUse": item['label'].get('instructionsForUse', None),
-            "mechanismOfAction": item['label'].get('mechanismOfAction', None),
-            "contraindications": item['label'].get('contraindications', None),
-            "boxedWarning": item['label'].get('boxedWarning', None)
-        }
+        metadata = {}
+        if item.get('setId') is not None:
+            metadata["item_id"] = item.get('setId')
+        for key in [
+            "indicationsAndUsage",
+            "dosageAndAdministration",
+            "dosageFormsAndStrengths",
+            "warningsAndPrecautions",
+            "adverseReactions",
+            "clinicalPharmacology",
+            "clinicalStudies",
+            "howSupplied",
+            "useInSpecificPopulations",
+            "description",
+            "nonclinicalToxicology",
+            "instructionsForUse",
+            "mechanismOfAction",
+            "contraindications",
+            "boxedWarning"
+        ]:
+            value = item['label'].get(key, None)
+            if value is not None:
+                metadata[key] = value
         
         ids.append(str(item['setId']))
         documents.append(concatenated_text)
