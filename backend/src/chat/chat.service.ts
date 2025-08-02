@@ -71,7 +71,7 @@ export class ChatService {
             const searchResult =
               await this.searchMedicalDataService.searchMedicalData(args);
             const medications = searchResult.map((r) => ({
-              id: r.id,
+              id: r.payload['item_id'] as string,
               name: r.payload['drugName'] as string,
               chunk: r.chunk,
             }));
