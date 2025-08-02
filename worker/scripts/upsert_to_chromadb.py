@@ -1,6 +1,5 @@
 import os
 import chromadb
-from chromadb.config import Settings
 
 def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug_data"):
     """

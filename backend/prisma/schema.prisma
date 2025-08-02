@@ -11,8 +11,8 @@ datasource db {
 }
 
 model Labeler {
-  id         String   @id @default(cuid())
-  name       String
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
@@ -29,7 +29,7 @@ model Drug {
   effective_time              DateTime?
   title                       String?
   slug                        String    @unique
-  labeler_id                  String
+  labeler_id                  Int
   indications_and_usage       String?
   dosage_and_administration   String?
   dosage_forms_and_strengths  String?
