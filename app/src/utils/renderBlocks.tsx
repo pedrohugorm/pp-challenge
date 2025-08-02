@@ -33,6 +33,16 @@ export function renderBlock({ block }: RenderBlockProps): React.ReactElement {
                     renderBlock({ block: content as BlockContent })
                 )
             );
+        } else if (content && typeof content === 'object' && 'id' in content && 'name' in content && 'slug' in content) {
+            // Handle embed medication data directly in contents
+            const medicationData = content as EmbedMedicationData;
+            children.push(
+                React.createElement(
+                    React.Fragment,
+                    { key: index },
+                    <EmbedMedication contents={[medicationData]} />
+                )
+            );
         } else {
             // Handle invalid content
             console.warn('Invalid content in block:', content);
@@ -156,7 +166,7 @@ const EmbedMedication = ({ contents }: { contents: (string | BlockContent | Embe
     return (
         <a 
             href={`/medication/${medicationData.slug}`} 
-            className="text-blue-600 hover:text-blue-800 underline font-medium"
+            className="text-blue-600 hover:text-blue-800 underline font-medium !text-blue-600 block mb-2"
         >
             {medicationData.name}
         </a>
@@ -164,6 +174,7 @@ const EmbedMedication = ({ contents }: { contents: (string | BlockContent | Embe
 };
 
 // Component map
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const componentMap: Record<string, React.ComponentType<any>> = {
     'h1': ({ children }: { children: React.ReactNode }) => <Header level={1}>{children}</Header>,
     'h2': ({ children }: { children: React.ReactNode }) => <Header level={2}>{children}</Header>,
@@ -207,3 +218,5 @@ export function RenderBlocks({ blocks }: RenderBlocksProps): React.ReactElement 
     
     return React.createElement(React.Fragment, {}, ...renderBlocks(blocks));
 }
+
+

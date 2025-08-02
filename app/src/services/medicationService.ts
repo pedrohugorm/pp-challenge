@@ -17,11 +17,11 @@ export interface MedicationResponse {
     medications: Medication[];
 }
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
+import { getBackendUrl } from '../utils/getBackendUrl';
 
 export async function fetchMedications(): Promise<MedicationResponse> {
     try {
-        const response = await fetch(`${BACKEND_URL}/medications`);
+        const response = await fetch(`${getBackendUrl()}/medications`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

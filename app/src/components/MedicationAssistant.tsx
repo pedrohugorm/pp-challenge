@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import ChatBalloon, { ChatBlock } from './ChatBalloon';
+import { chatService } from '../services/chatService';
 
 export default function MedicationAssistant() {
     const [chatBlocks, setChatBlocks] = useState<ChatBlock[]>([]);
     const [messageText, setMessageText] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const assistantMessage: ChatBlock = {
         type: 'p',
@@ -11,7 +13,7 @@ export default function MedicationAssistant() {
         role: 'assistant'
     };
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (messageText.trim()) {
             const userBlock: ChatBlock = {
                 type: 'p',
@@ -21,6 +23,30 @@ export default function MedicationAssistant() {
             
             setChatBlocks(prev => [...prev, userBlock]);
             setMessageText('');
+            setIsLoading(true);
+
+            try {
+                const data = await chatService.sendMessage({
+                    userPrompt: messageText.trim(),
+                    context: []
+                });
+                
+                console.log('Backend response:', data);
+                
+                setChatBlocks(prev => [...prev, ...data.response.blocks]);
+                
+            } catch (error) {
+                console.error('Error calling backend:', error);
+                
+                const errorBlock: ChatBlock = {
+                    type: 'p',
+                    contents: ['Sorry, I encountered an error while processing your request. Please try again.'],
+                    role: 'assistant'
+                };
+                setChatBlocks(prev => [...prev, errorBlock]);
+            } finally {
+                setIsLoading(false);
+            }
         }
     };
 
@@ -42,9 +68,20 @@ export default function MedicationAssistant() {
                 {chatBlocks.length === 0 ? (
                     <ChatBalloon block={assistantMessage} />
                 ) : (
-                    chatBlocks.map((block, index) => (
-                        <ChatBalloon key={index} block={block} />
-                    ))
+                    <>
+                        {chatBlocks.map((block, index) => (
+                            <ChatBalloon key={index} block={block} />
+                        ))}
+                        {isLoading && (
+                            <ChatBalloon 
+                                block={{
+                                    type: 'p',
+                                    contents: ['Searching...'],
+                                    role: 'assistant'
+                                }} 
+                            />
+                        )}
+                    </>
                 )}
             </div>
 
@@ -57,13 +94,14 @@ export default function MedicationAssistant() {
                         rows={3}
                         value={messageText}
                         onChange={(e) => setMessageText(e.target.value)}
-                        onKeyPress={handleKeyPress}
+                        onKeyUp={handleKeyPress}
                     />
                     <button
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleSend}
+                        disabled={isLoading}
                     >
-                        Send
+                        {isLoading ? 'Sending...' : 'Send'}
                     </button>
                 </div>
             </div>

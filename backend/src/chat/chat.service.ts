@@ -114,6 +114,7 @@ export class ChatService {
 
 interface Blocks {
   type: 'p' | 'embed-medication';
+  role: 'assistant' | 'user';
   contents: (Medication | string)[];
 }
 
@@ -137,6 +138,7 @@ const convertResultToChatMessage = (
         ...blocks,
         {
           type: 'p',
+          role: 'assistant',
           contents: ['Something went wrong. I could not find any information.'],
         },
       ];
@@ -151,6 +153,7 @@ const convertResultToChatMessage = (
       ...blocks,
       {
         type: 'p',
+        role: 'assistant',
         contents: [medicationList.reasoning, ...medicationList.medications],
       },
     ];
