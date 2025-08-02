@@ -4,9 +4,12 @@ import {
   ChatCompletionMessage,
   ChatCompletionTool,
 } from 'openai/resources/chat/completions/completions';
-import { ChromaClient } from 'chromadb';
 import { z } from 'zod';
 import { zodResponseFormat } from 'openai/helpers/zod';
+import {
+  SearchMedicalDataService,
+  SearchMedicalDataRequest,
+} from './search-medical-data.service';
 
 export const ItemSchema = z.object({
   id: z.string({ description: 'id of the medication' }),
@@ -34,43 +37,13 @@ export type MedicationListResponse = z.infer<
 @Injectable()
 export class ChatService {
   private openai: OpenAI;
-  private chromaClient: ChromaClient;
 
-  constructor() {
+  constructor(
+    private readonly searchMedicalDataService: SearchMedicalDataService,
+  ) {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-
-    this.chromaClient = new ChromaClient({
-      path: process.env.CHROMA_URL || 'http://localhost:8000',
-    });
-  }
-
-  private async searchMedicalData(args: SearchMedicalDataRequest) {
-    try {
-      // Get or create the collection
-      const collection = await this.chromaClient.getOrCreateCollection({
-        name: 'drug_data',
-      });
-
-      // Search ChromaDB using text query (ChromaDB handles embeddings automatically)
-      const searchResults = await collection.query({
-        queryTexts: [args.userPrompt],
-        nResults: 10,
-      });
-
-      console.log('Medical data search results:', searchResults);
-
-      // Transform results to match the expected format
-      return searchResults.ids[0].map((id, index) => ({
-        id: id,
-        score: 1 - (searchResults.distances?.[0]?.[index] || 0), // Convert distance to similarity score
-        payload: searchResults.metadatas?.[0]?.[index] || {},
-      }));
-    } catch (error) {
-      console.error('Error searching medical data:', error);
-      throw error;
-    }
   }
 
   async chat(prompt: string): Promise<ChatCompletionMessage[]> {
@@ -95,10 +68,11 @@ export class ChatService {
             const args = JSON.parse(
               tool.function.arguments,
             ) as SearchMedicalDataRequest;
-            const searchResult = await this.searchMedicalData(args);
+            const searchResult =
+              await this.searchMedicalDataService.searchMedicalData(args);
             const medications = searchResult.map((r) => ({
               id: r.id,
-              field: r.payload[args.field],
+              field: r.payload[args.field] as string,
             }));
 
             const confirmationResult =
@@ -194,8 +168,3 @@ const getConfirmationUserPrompt = (userPrompt: string) => {
   ## END USER PROMPT
   `;
 };
-
-interface SearchMedicalDataRequest {
-  userPrompt: string;
-  field: string;
-}
