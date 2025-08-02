@@ -157,6 +157,7 @@ const getConfirmationPrompt = (searchResults: string) => {
   return `Your task is to read the search results list below against a user prompt and ONLY include the items that are relevant to what the user asked on your response.
   Do not mention that there were other search results.
   Do not mention search result items that are not relevant. 
+  If you cannot find any items, just say that you cannot find any item and do not hallucinate or look for information anywhere else.
   ## BEGIN Search Results:
   ${searchResults}
   ## END Search results
