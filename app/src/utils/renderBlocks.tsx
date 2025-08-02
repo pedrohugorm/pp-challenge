@@ -1,8 +1,14 @@
 import React from 'react';
 
+export interface EmbedMedicationData {
+    id: string;
+    name: string;
+    slug: string;
+}
+
 export interface BlockContent {
     type: string;
-    contents: (string | BlockContent)[];
+    contents: (string | BlockContent | EmbedMedicationData)[];
 }
 
 interface RenderBlockProps {
@@ -36,18 +42,18 @@ export function renderBlock({ block }: RenderBlockProps): React.ReactElement {
     // Check if there's a custom component for this type
     if (componentMap[type]) {
         const CustomComponent = componentMap[type];
-        return React.createElement(CustomComponent, {}, ...children);
+        return React.createElement(CustomComponent, { contents }, ...children);
     }
     
-    // Validate that type is a valid HTML tag for fallback
-    const validHtmlTags = [
+    // Validate that type is a valid block type for fallback
+    const validBlockTypes = [
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'strong', 'em', 
-        'ul', 'ol', 'li', 'a', 'table', 'tr', 'th', 'td', 'code', 'mark'
+        'ul', 'ol', 'li', 'a', 'table', 'tr', 'th', 'td', 'mark', 'embed-medication'
     ];
     
-    if (!validHtmlTags.includes(type)) {
-        console.warn(`Invalid HTML tag type: ${type}. Falling back to div.`);
-        return React.createElement('div', {}, `Invalid tag: ${type}`);
+    if (!validBlockTypes.includes(type)) {
+        console.warn(`Invalid block type: ${type}. Falling back to div.`);
+        return React.createElement('div', {}, `Invalid block type: ${type}`);
     }
     
     // Create the element dynamically
@@ -131,6 +137,32 @@ const Mark = ({ format, children }: { format: string; children: React.ReactNode 
     }
 };
 
+// EmbedMedication component
+const EmbedMedication = ({ contents }: { contents: (string | BlockContent | EmbedMedicationData)[] }) => {
+    // Find the EmbedMedicationData in contents
+    const medicationData = contents.find(content => 
+        typeof content === 'object' && 
+        content && 
+        'id' in content && 
+        'name' in content && 
+        'slug' in content
+    ) as EmbedMedicationData | undefined;
+    
+    if (!medicationData || !medicationData.name || !medicationData.slug) {
+        console.warn('EmbedMedication: Missing required embed data (name or slug)');
+        return <span className="text-red-500">Invalid medication link</span>;
+    }
+    
+    return (
+        <a 
+            href={`/medication/${medicationData.slug}`} 
+            className="text-blue-600 hover:text-blue-800 underline font-medium"
+        >
+            {medicationData.name}
+        </a>
+    );
+};
+
 // Component map
 const componentMap: Record<string, React.ComponentType<any>> = {
     'h1': ({ children }: { children: React.ReactNode }) => <Header level={1}>{children}</Header>,
@@ -151,7 +183,8 @@ const componentMap: Record<string, React.ComponentType<any>> = {
     'strong': ({ children }: { children: React.ReactNode }) => <Mark format="strong">{children}</Mark>,
     'em': ({ children }: { children: React.ReactNode }) => <Mark format="em">{children}</Mark>,
     'code': ({ children }: { children: React.ReactNode }) => <Mark format="code">{children}</Mark>,
-    'mark': ({ children }: { children: React.ReactNode }) => <Mark format="mark">{children}</Mark>
+    'mark': ({ children }: { children: React.ReactNode }) => <Mark format="mark">{children}</Mark>,
+    'embed-medication': ({ contents }: { contents: (string | BlockContent | EmbedMedicationData)[] }) => <EmbedMedication contents={contents} />
 };
 
 // Utility function to render multiple blocks

@@ -1,7 +1,15 @@
-import React from 'react';
-import ChatBalloon from './ChatBalloon';
+import React, { useState } from 'react';
+import ChatBalloon, { ChatBlock } from './ChatBalloon';
 
 export default function MedicationAssistant() {
+    const [chatBlocks, setChatBlocks] = useState<ChatBlock[]>([]);
+
+    const assistantMessage: ChatBlock = {
+        type: 'p',
+        contents: ["Hello! I'm here to help you with medication information. How can I assist you today?"],
+        role: 'assistant'
+    };
+
     return (
         <div className="hidden lg:flex w-80 bg-white border-l border-gray-200 flex-col">
             <div className="p-4 border-b border-gray-200">
@@ -10,9 +18,13 @@ export default function MedicationAssistant() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <ChatBalloon 
-                    message="Hello! I'm here to help you with medication information. How can I assist you today?"
-                />
+                {chatBlocks.length === 0 ? (
+                    <ChatBalloon block={assistantMessage} />
+                ) : (
+                    chatBlocks.map((block, index) => (
+                        <ChatBalloon key={index} block={block} />
+                    ))
+                )}
             </div>
 
             <div className="p-4 border-t border-gray-200">
