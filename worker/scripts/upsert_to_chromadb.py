@@ -1,7 +1,6 @@
 import os
 import chromadb
 from chromadb.config import Settings
-from sentence_transformers import SentenceTransformer
 
 def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug_data"):
     """
@@ -14,7 +13,6 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
     
     # Initialize ChromaDB client
     client = chromadb.Client(Settings(
-        chroma_api_impl="rest",
         chroma_server_host=os.getenv("CHROMA_HOST", "localhost"),
         chroma_server_http_port=int(os.getenv("CHROMA_PORT", "8000")),
         chroma_server_ssl_enabled=False

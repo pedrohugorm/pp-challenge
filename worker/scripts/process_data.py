@@ -45,7 +45,7 @@ async def main():
     with open("./data/q_items.json", "w", encoding="utf-8") as outfile:
         json.dump(q_items, outfile, ensure_ascii=False, indent=2)
 
-    upsert_q_items_to_qdrant(q_items)
+    # upsert_q_items_to_qdrant(q_items)
     upsert_q_items_to_chromadb(q_items)
 
     print("Function executed successfully!")

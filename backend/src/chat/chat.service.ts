@@ -5,6 +5,19 @@ import {
   ChatCompletionTool,
 } from 'openai/resources/chat/completions/completions';
 import { QdrantClient } from '@qdrant/js-client-rest';
+import { z } from 'zod';
+import { zodResponseFormat } from 'openai/helpers/zod';
+
+export const ItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
+export type Item = z.infer<typeof ItemSchema>;
+
+export const MedicationListSchema = z.array(ItemSchema);
+
+export type MedicationList = z.infer<typeof MedicationListSchema>;
 
 @Injectable()
 export class ChatService {
@@ -147,6 +160,10 @@ export class ChatService {
                 ],
                 tools: getTools(),
                 store: true,
+                response_format: zodResponseFormat(
+                  MedicationListSchema,
+                  'medications',
+                ),
               });
 
             result = [...result, confirmationResult.choices[0].message];
