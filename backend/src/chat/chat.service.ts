@@ -48,7 +48,7 @@ export class ChatService {
 
   async chat(prompt: string): Promise<ChatCompletionMessage[]> {
     const response = await this.openai.chat.completions.create({
-      model: 'gpt-4.1',
+      model: 'gpt-4.1-mini',
       messages: [
         { role: 'system', content: getSearchPrompt() },
         { role: 'user', content: prompt },
@@ -72,6 +72,7 @@ export class ChatService {
               await this.searchMedicalDataService.searchMedicalData(args);
             const medications = searchResult.map((r) => ({
               id: r.id,
+              name: r.payload['drugName'] as string,
               field: r.payload[args.field] as string,
             }));
 
@@ -152,7 +153,7 @@ const getSearchPrompt = () => {
   `;
 };
 
-const getConfirmationPrompt = (searchResults) => {
+const getConfirmationPrompt = (searchResults: string) => {
   return `Your task is to read the search results list below against a user prompt and ONLY include the items that are relevant to what the user asked on your response.
   Do not mention that there were other search results.
   Do not mention search result items that are not relevant. 
