@@ -45,6 +45,7 @@ model Drug {
   mechanism_of_action         String?
   contraindications           String?
   boxed_warning               String?
+  meta_description            String?
   highlights                  Json?
   blocks_json                 Json?
   created_at                  DateTime  @default(now())

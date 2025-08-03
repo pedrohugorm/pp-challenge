@@ -1,12 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ChatBalloon, { ChatBlock } from './ChatBalloon';
 import { chatService, ContextItem } from '@/services/chatService';
+
+// Local storage key
+const STORAGE_KEY = 'medication-assistant-state';
+
+// Interface for the complete state
+interface AssistantState {
+    chatBlocks: ChatBlock[];
+    messageText: string;
+    isLoading: boolean;
+    contextList: ContextItem[];
+}
 
 export default function MedicationAssistant() {
     const [chatBlocks, setChatBlocks] = useState<ChatBlock[]>([]);
     const [messageText, setMessageText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [contextList, setContextList] = useState<ContextItem[]>([]);
+
+    // Load state from localStorage on component mount
+    useEffect(() => {
+        try {
+            const savedState = localStorage.getItem(STORAGE_KEY);
+            if (savedState) {
+                const parsedState: AssistantState = JSON.parse(savedState);
+                setChatBlocks(parsedState.chatBlocks || []);
+                setMessageText(parsedState.messageText || '');
+                setIsLoading(parsedState.isLoading || false);
+                setContextList(parsedState.contextList || []);
+            }
+        } catch (error) {
+            console.error('Error loading state from localStorage:', error);
+        }
+    }, []);
+
+    // Save complete state to localStorage
+    const saveState = () => {
+        try {
+            const state: AssistantState = {
+                chatBlocks,
+                messageText,
+                isLoading,
+                contextList
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+            console.error('Error saving state to localStorage:', error);
+        }
+    };
 
     const assistantMessage: ChatBlock = {
         type: 'p',
@@ -19,6 +61,8 @@ export default function MedicationAssistant() {
         setMessageText('');
         setIsLoading(false);
         setContextList([]);
+        // Clear localStorage
+        localStorage.removeItem(STORAGE_KEY);
     };
 
     const handleSend = async () => {
@@ -34,11 +78,24 @@ export default function MedicationAssistant() {
                 role: 'user',
                 content: messageText.trim(),
             };
-            setContextList(prev => [...prev, contextItem]);
             
-            setChatBlocks(prev => [...prev, userBlock]);
+            // Update state with user message
+            const newContextList = [...contextList, contextItem];
+            const newChatBlocks = [...chatBlocks, userBlock];
+            
+            setContextList(newContextList);
+            setChatBlocks(newChatBlocks);
             setMessageText('');
             setIsLoading(true);
+            
+            // Save state with user message
+            const stateWithUserMessage: AssistantState = {
+                chatBlocks: newChatBlocks,
+                messageText: '',
+                isLoading: true,
+                contextList: newContextList
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(stateWithUserMessage));
 
             try {
                 const data = await chatService.sendMessage({
@@ -48,10 +105,21 @@ export default function MedicationAssistant() {
                 
                 console.log('Backend response:', data);
                 
-                // Append the response context to the context list
-                setContextList(prev => [...prev, ...data.response.context]);
+                // Update state with response
+                const finalContextList = [...newContextList, ...data.response.context];
+                const finalChatBlocks = [...newChatBlocks, ...data.response.blocks];
                 
-                setChatBlocks(prev => [...prev, ...data.response.blocks]);
+                setContextList(finalContextList);
+                setChatBlocks(finalChatBlocks);
+                
+                // Save state with service response
+                const stateWithResponse: AssistantState = {
+                    chatBlocks: finalChatBlocks,
+                    messageText: '',
+                    isLoading: false,
+                    contextList: finalContextList
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(stateWithResponse));
                 
             } catch (error) {
                 console.error('Error calling backend:', error);
@@ -61,7 +129,18 @@ export default function MedicationAssistant() {
                     contents: ['Sorry, I encountered an error while processing your request. Please try again.'],
                     role: 'assistant'
                 };
-                setChatBlocks(prev => [...prev, errorBlock]);
+                
+                const finalChatBlocks = [...newChatBlocks, errorBlock];
+                setChatBlocks(finalChatBlocks);
+                
+                // Save state with error
+                const stateWithError: AssistantState = {
+                    chatBlocks: finalChatBlocks,
+                    messageText: '',
+                    isLoading: false,
+                    contextList: newContextList
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(stateWithError));
             } finally {
                 setIsLoading(false);
             }

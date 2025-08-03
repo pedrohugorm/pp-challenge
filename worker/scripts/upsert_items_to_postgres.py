@@ -101,6 +101,7 @@ def upsert_items_to_postgres(q_items, structured_items_json_array):
             mechanism_of_action = q_item['label'].get('mechanismOfAction', None)
             contraindications = q_item['label'].get('contraindications', None)
             boxed_warning = q_item['label'].get('boxedWarning', None)
+            meta_description = q_item.get('metaDescription', None)
 
             # Use structured_item for highlights and blocks_json
             highlights = json.dumps(structured_item['label'].get('highlights', '{}'))
@@ -115,9 +116,9 @@ def upsert_items_to_postgres(q_items, structured_items_json_array):
                     clinical_pharmacology, clinical_studies, how_supplied,
                     use_in_specific_populations, description, nonclinical_toxicology,
                     instructions_for_use, mechanism_of_action, contraindications,
-                    boxed_warning, highlights, blocks_json, created_at, updated_at
+                    boxed_warning, meta_description, highlights, blocks_json, created_at, updated_at
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
                 ) ON CONFLICT (id) DO UPDATE SET
                     name = EXCLUDED.name,
                     generic_name = EXCLUDED.generic_name,
@@ -141,6 +142,7 @@ def upsert_items_to_postgres(q_items, structured_items_json_array):
                     mechanism_of_action = EXCLUDED.mechanism_of_action,
                     contraindications = EXCLUDED.contraindications,
                     boxed_warning = EXCLUDED.boxed_warning,
+                    meta_description = EXCLUDED.meta_description,
                     highlights = EXCLUDED.highlights,
                     blocks_json = EXCLUDED.blocks_json,
                     updated_at = NOW();
@@ -172,6 +174,7 @@ def upsert_items_to_postgres(q_items, structured_items_json_array):
                     mechanism_of_action,
                     contraindications,
                     boxed_warning,
+                    meta_description,
                     highlights,
                     blocks_json
                 )

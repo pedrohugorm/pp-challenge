@@ -9,6 +9,7 @@ export interface Medication {
     effective_time: Date;
     labeler: { name: string },
     description: string;
+    meta_description: string;
     blocks_json: Record<string, BlockContent[]>;
 }
 

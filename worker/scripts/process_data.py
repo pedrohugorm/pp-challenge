@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from scripts.clean_json_html import clean_json_html
 from scripts.structure_json_html import structure_json_html
 from scripts.prepare_item_for_qdrant import prepare_item_for_qdrant
+from scripts.summarize_description import summarize_description
 from scripts.upsert_to_chromadb import upsert_q_items_to_chromadb
 from scripts.upsert_items_to_postgres import upsert_items_to_postgres
 from scripts.fix_html_syntax import fix_html_syntax
@@ -37,6 +38,8 @@ async def main():
 
             structured_item = structure_json_html(item)
             q_item = prepare_item_for_qdrant(item)
+            summary = summarize_description(q_item)
+            q_item['metaDescription'] = summary
 
             items.append(item)
             structured_items_json_array.append(structured_item)

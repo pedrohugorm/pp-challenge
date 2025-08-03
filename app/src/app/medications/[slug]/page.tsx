@@ -3,6 +3,7 @@ import {fetchMedicationBySlug} from '@/services/medicationService';
 import {notFound} from 'next/navigation';
 import {renderBlocks} from "@/utils/renderBlocks";
 import type { Metadata } from 'next';
+import MedicationHeader from '@/components/MedicationHeader';
 
 interface MedicationPageProps {
     params: Promise<{
@@ -52,6 +53,9 @@ export default async function MedicationPage({params}: MedicationPageProps) {
 
     return (
         <div className="min-h-screen bg-gray-50 medication-document">
+            {/* Medication Header - Full Width */}
+            <MedicationHeader title="Medication Search" />
+            
             <div className="max-w-4xl mx-auto px-4 py-8">
                 {/* Back Button */}
                 <div className="mb-6">

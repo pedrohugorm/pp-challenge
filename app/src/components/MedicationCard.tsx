@@ -1,27 +1,19 @@
 import React from 'react';
 import Link from 'next/link';
 import { type Medication } from '@/services/medicationService';
-import { RenderBlocks } from '@/utils/renderBlocks';
 
 interface MedicationCardProps {
     medication: Medication;
 }
 
 export default function MedicationCard({ medication }: MedicationCardProps) {
-    // Generate a slug from the medication name and id
-    const slug = `${medication.name.toLowerCase().replace(/\s+/g, '-')}-${medication.id}`;
-    
     return (
-        <Link href={`/medications/${slug}`} className="block">
+        <Link href={`/medications/${medication.slug}`} className="block">
             <div className="bg-white rounded-md shadow-sm border border-gray-200 p-4 lg:p-6 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="flex justify-between items-start mb-2 lg:mb-3">
-                    <h2 className="font-semibold text-gray-800 text-lg lg:text-xl">
-                        {medication.name}
-                    </h2>
+                    <h2 className="font-semibold text-gray-800 text-lg lg:text-xl">{medication.name} ({medication.generic_name})</h2>
                 </div>
-                <div className="space-y-1 lg:space-y-2 text-sm text-gray-600">
-                    <RenderBlocks blocks={medication.blocks_json['description']} headerOffset={0} />
-                </div>
+                <div className="space-y-1 lg:space-y-2 text-sm text-gray-600">{medication.meta_description}</div>
             </div>
         </Link>
     );

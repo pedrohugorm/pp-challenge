@@ -47,6 +47,7 @@ export class MedicationsService {
         slug: true,
         updated_at: true,
         blocks_json: true,
+        meta_description: true,
         labeler: {
           select: {
             id: true,
@@ -90,6 +91,7 @@ export class MedicationsService {
         slug: true,
         updated_at: true,
         blocks_json: true,
+        meta_description: true,
         labeler: {
           select: {
             id: true,
