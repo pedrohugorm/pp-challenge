@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import {fetchMedicationBySlug} from '@/services/medicationService';
 import {notFound} from 'next/navigation';
-import {renderBlocks} from "@/utils/renderBlocks";
 import type { Metadata } from 'next';
 import MedicationHeader from '@/components/MedicationHeader';
+import DOMPurify from "dompurify";
+import { JSDOM } from 'jsdom';
 
 interface MedicationPageProps {
     params: Promise<{
@@ -41,6 +42,11 @@ export async function generateMetadata({ params }: MedicationPageProps): Promise
     };
 }
 
+const cleanHtml = (html:string) => {
+    const window = new JSDOM('').window;
+    return DOMPurify(window).sanitize(html);
+}
+
 export default async function MedicationPage({params}: MedicationPageProps) {
     const resolvedParams = await params;
     const medication = await getMedicationData(resolvedParams.slug);
@@ -76,24 +82,22 @@ export default async function MedicationPage({params}: MedicationPageProps) {
                 <p>Product type: {medication.product_type}</p>
                 <p>Effective date: {new Date(medication.effective_time).toLocaleDateString()}</p>
 
-                {renderBlocks(medication.blocks_json['labeler'], 1)}
-                {renderBlocks(medication.blocks_json['description'], 1)}
-                {renderBlocks(medication.blocks_json['indicationsAndUsage'], 1)}
-                {renderBlocks(medication.blocks_json['dosageAndAdministration'], 1)}
-                {renderBlocks(medication.blocks_json['dosageFormsAndStrengths'], 1)}
-                {renderBlocks(medication.blocks_json['contraindications'], 1)}
-                {renderBlocks(medication.blocks_json['warningsAndPrecautions'], 1)}
-                {renderBlocks(medication.blocks_json['boxedWarning'], 1)}
+                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['labeler'] as string) }}></div>
 
-                {renderBlocks(medication.blocks_json['adverseReactions'], 1)}
-                {renderBlocks(medication.blocks_json['useInSpecificPopulations'], 1)}
-
-                {/* {renderBlocks(medication.blocks_json['clinicalPharmacology'], 1)} */}
-                {/* {renderBlocks(medication.blocks_json['clinicalStudies'], 1)} */}
-                {/* {renderBlocks(medication.blocks_json['howSupplied'], 1)} */}
-                {/* {renderBlocks(medication.blocks_json['nonclinicalToxicology'], 1)} */}
-                {/* {renderBlocks(medication.blocks_json['instructionsForUse'], 1)} */}
-                {/* {renderBlocks(medication.blocks_json['mechanismOfAction'], 1)} */}
+                <h2>Description</h2>
+                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['description'] as string) }}></div>
+                <h2>1. Indications and Usage</h2>
+                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['indicationsAndUsage'] as string) }}></div>
+                <h2>2. Dosage and Administration</h2>
+                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['dosageAndAdministration'] as string) }}></div>
+                <h2>3. Dosage forms and Strengths</h2>
+                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['dosageFormsAndStrengths'] as string) }}></div>
+                <h2>4. Contraindications</h2>
+                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['contraindications'] as string) }}></div>
+                <h2>5. Warnings and Precautions</h2>
+                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['warningsAndPrecautions'] as string) }}></div>
+                <h2>6. Adverse Reactions</h2>
+                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['adverseReactions'] as string) }}></div>
             </div>
         </div>
     );

@@ -40,6 +40,9 @@ async def main():
             item['label']['description'] = enhance_content(item['label']['description'])
             item['label']['indicationsAndUsage'] = enhance_content(item['label']['indicationsAndUsage'])
             item['label']['dosageAndAdministration'] = enhance_content(item['label']['dosageAndAdministration'])
+            item['label']['dosageFormsAndStrengths'] = enhance_content(item['label']['dosageFormsAndStrengths'])
+            item['label']['contraindications'] = enhance_content(item['label']['contraindications'])
+            item['label']['warningsAndPrecautions'] = enhance_content(item['label']['warningsAndPrecautions'])
             item['label']['adverseReactions'] = enhance_content(item['label']['adverseReactions'])
 
             # structured_item = structure_json_html(item)

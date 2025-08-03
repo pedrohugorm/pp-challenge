@@ -1,5 +1,3 @@
-import {BlockContent} from "@/utils/renderBlocks";
-
 export interface Medication {
     id: string;
     name: string;
@@ -10,7 +8,7 @@ export interface Medication {
     labeler: { name: string },
     description: string;
     meta_description: string;
-    blocks_json: Record<string, BlockContent[]>;
+    blocks_json: Record<string, string>;
 }
 
 export interface MedicationResponse {

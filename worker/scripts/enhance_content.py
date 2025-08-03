@@ -1,8 +1,8 @@
 import openai
 import os
 from typing import Optional
-
 from openai.types.chat import ChatCompletionUserMessageParam
+from bs4 import BeautifulSoup
 
 prompt = """
 You are an expert in clinical data presentation. Your task is to process raw HTML drug labeling content and convert it into clear, fully detailed, human-readable output suitable for healthcare providers.
@@ -93,7 +93,9 @@ def enhance_content(text: str) -> str:
     api_key = os.getenv('OPENAI_API_KEY')
     # Initialize OpenAI client
     client = openai.OpenAI(api_key=api_key)
-    
+
+    # Remove all header tags and their content using BeautifulSoup
+
     try:
         # Create the full prompt by combining the predefined prompt with the input text
         full_prompt = prompt + text
@@ -113,8 +115,26 @@ def enhance_content(text: str) -> str:
         print('Content enhanced')
 
         # Extract and return the response content
-        return response.choices[0].message.content.strip()
-        
+        result_content = response.choices[0].message.content.strip()
+
+        soup = BeautifulSoup(result_content, "html.parser")
+        # Change all h5 to h6
+        for h5_tag in soup.find_all('h5'):
+            h5_tag.name = 'h6'
+        # Change all h4 to h5
+        for h4_tag in soup.find_all('h4'):
+            h4_tag.name = 'h5'
+        # Change all h3 to h4
+        for h3_tag in soup.find_all('h3'):
+            h3_tag.name = 'h4'
+        # Change all h2 to h3
+        for h2_tag in soup.find_all('h2'):
+            h2_tag.name = 'h3'
+        # Remove all h1 tags
+        for h1_tag in soup.find_all('h1'):
+            h1_tag.decompose()
+        return str(soup)
+
     except openai.OpenAIError as e:
         raise openai.OpenAIError(f"Error calling OpenAI API: {str(e)}")
     except Exception as e:
