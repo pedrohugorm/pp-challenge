@@ -9,7 +9,7 @@ from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunct
 
 def find_similar_drugs_by_name(
         drug_name: str,
-        collection_name: str = "drug_data",
+        collection_name: str = "drug_similar_data",
         top_k: int = 5
 ) -> List[Tuple[str, int]]:
     """
@@ -45,6 +45,9 @@ def find_similar_drugs_by_name(
 
     # Step 1: Retrieve all stored documents and select embeddings for the target drug
     all_docs = collection.get(include=["documents", "embeddings", "metadatas"])
+    drug_names = set(m.get("name") for m in all_docs["metadatas"])
+    print("Available:", drug_names)
+
     embeddings = [
         np.array(emb)
         for emb, meta in zip(all_docs["embeddings"], all_docs["metadatas"])
@@ -67,9 +70,9 @@ def find_similar_drugs_by_name(
     # Step 4: Aggregate similar drug names, excluding the original
     similar_metadatas = results["metadatas"][0]
     similar_names = [
-        m["drugName"]
+        m["name"]
         for m in similar_metadatas
-        if m.get("drugName") and m["drugName"] != drug_name
+        if m.get("name") and m["name"] != drug_name
     ]
     ranked = Counter(similar_names).most_common(top_k)
 

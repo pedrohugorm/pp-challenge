@@ -54,7 +54,7 @@ def spacy_chunk_text(text: str, max_tokens: int = 300, overlap_tokens: int = 30)
 
     return chunks
 
-def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug_data"):
+def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug_data", similar_collection_name: str = "drug_similar_data"):
     """
     Upsert q_items to ChromaDB with embeddings for each field separately.
     
@@ -86,13 +86,21 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
         embedding_function=embedding_fn
     )
 
+    collection_similar = client.get_or_create_collection(
+        name=similar_collection_name,
+        embedding_function=embedding_fn
+    )
+
     print(f"Collection ready: {collection_name}")
     
     # Prepare data for ChromaDB
     total_chunks = 0
     ids = []
+    ids_similar = []
     documents = []
+    documents_similar = []
     metadatas = []
+    metadatas_similar = []
     
     for item in q_items:
         # Concatenate relevant fields into one variable
@@ -120,11 +128,19 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
             str(item['label'].get('highlights', {}).get('dosageAndAdministration', '')).strip()
         ])
 
+        similar_check_text = " ".join([
+            str(item['label'].get('indicationsAndUsage', '')).strip(),
+            str(item['label'].get('dosageAndAdministration', '')).strip(),
+            str(item['label'].get('mechanismOfAction', '')).strip(),
+        ])
+
         # Prepare metadata
         metadata = {}
         if item.get('setId') is not None:
             metadata["item_id"] = item.get('setId')
+            metadata["setId"] = item.get('setId') # TODO: use this over 'item_id'.
             metadata['name'] = item.get('drugName')
+            metadata['drugName'] = item.get('drugName') # TODO: use this over 'name'.
             metadata['slug'] = item.get('slug')
         for key in [
             # "indicationsAndUsage",
@@ -150,6 +166,7 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
         # Chunk the concatenated text
         # chunks = chunk_text(concatenated_text, MAX_TOKENS)
         chunks = spacy_chunk_text(concatenated_text, max_tokens=MAX_TOKENS, overlap_tokens=30)
+        chunks_similar = spacy_chunk_text(similar_check_text, max_tokens=MAX_TOKENS, overlap_tokens=30)
 
         # Add each chunk with the same id and metadata
         for idx, chunk in enumerate(chunks):
@@ -158,7 +175,13 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
             documents.append(chunk)
             metadatas.append(metadata)
 
-        print(f'Upserting {len(ids)} items to ChromaDB')
+        for idx, chunk in enumerate(chunks_similar):
+            chunk_id = f"{item['setId']}:chunk:{idx}"
+            ids_similar.append(chunk_id)
+            documents_similar.append(chunk)
+            metadatas_similar.append(metadata)
+
+        print(f'Upserting {len(ids)} chunks and {len(ids_similar)} similar chunks to ChromaDB')
 
         # Upsert to ChromaDB
         collection.upsert(
@@ -167,10 +190,19 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
             metadatas=metadatas
         )
 
+        collection_similar.upsert(
+            ids=ids_similar,
+            documents=documents_similar,
+            metadatas=metadatas_similar
+        )
+
         total_chunks += len(ids)
         print(f'Upserted {len(ids)} chunks')
         ids = []
+        ids_similar = []
         documents = []
+        documents_similar = []
         metadatas = []
+        metadatas_similar = []
     
     print(f"Successfully upserted {total_chunks} chunks from {len(q_items)} items to ChromaDB collection: {collection_name}")
