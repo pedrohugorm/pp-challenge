@@ -82,6 +82,10 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
             str(item['label'].get('mechanismOfAction', '')).strip(),
             str(item['label'].get('contraindications', '')).strip(),
             str(item['label'].get('boxedWarning', '')).strip(),
+            str(item.get('useAndConditions', '')).strip(),
+            str(item.get('contraIndicationWarnings', '')).strip(),
+            str(item.get('metaDescription', '')).strip(),
+            str(item.get('dosing', '')).strip(),
             str(item['label'].get('highlights', {}).get('dosageAndAdministration', '')).strip()
         ])
 

@@ -75,3 +75,219 @@ The summary must have a max of 60 characters.
         print(f"Error during summarization: {e}")
         # Return a fallback summary or the original content
         return f"Error in summarization: {str(e)}"
+
+
+def summarize_use_and_conditions(q_item: Dict[str, Any]) -> str:
+    """
+    Summarizes the description content from a q_item dictionary using GPT-4
+    without hallucinating or adding information not present in the original text.
+
+    Args:
+        q_item: A dictionary containing item data with description content
+
+    Returns:
+        A summarized version of the description content
+    """
+
+    # Initialize OpenAI client
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+    content = q_item['label']['indicationsAndUsage']
+    content += q_item['label']['dosageAndAdministration']
+
+    # If no label.description found, return empty string
+    if not content:
+        return ""
+
+    # Create a prompt that emphasizes summarization without hallucination
+    prompt = f"""
+You are a clinical documentation specialist. Your task is to extract and summarize the **therapeutic uses** of the drug and the **medical conditions it treats**, based solely on the content provided below.
+
+Output Formatting Rules:
+- Return **only raw HTML** using these allowed tags: `<p>`, `<ul>`, and `<li>`.
+- Do **not** wrap the output in triple backticks (```) or any language annotations like `html`.
+- Do **not** include any extraneous text before or after the HTML (e.g., explanations, labels, or markdown).
+- Wrap section headings (e.g., “Approved Indications”) in `<p>` tags.
+- Use `<ul>` and `<li>` for lists of specific indications or conditions.
+
+Clinical Guidelines:
+- Use only the information contained in the provided data. Do **not** rely on external sources or medical knowledge.
+- Extract and clearly identify:
+  - Approved indications
+  - Conditional or accelerated approvals
+  - Off-label uses (only if explicitly stated)
+- Include treatment context if present (e.g., line of therapy, target population).
+- Do **not** fabricate or infer missing information.
+- Exclude unrelated clinical details (e.g., dosage, pharmacokinetics) unless directly stated within an indication.
+
+## BEGIN Drug Data:
+${content}
+## END Drug Data
+"""
+
+    try:
+        print(f'Summarizing Uses and Conditions {q_item["drugName"]}...')
+        # Use GPT-4 for the best summarization quality
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                ChatCompletionSystemMessageParam(role="system", content=prompt),
+            ],
+            temperature=0.1,  # Low temperature for more deterministic output
+            max_tokens=500,
+            top_p=0.9
+        )
+
+        print(f'Summarized Uses and Conditions {q_item["drugName"]}...')
+
+        summary = response.choices[0].message.content.strip()
+        return summary
+
+    except Exception as e:
+        print(f"Error during summarization: {e}")
+        # Return a fallback summary or the original content
+        return f"Error in summarization: {str(e)}"
+
+
+def summarize_contra_indications_warnings(q_item: Dict[str, Any]) -> str:
+    """
+    Summarizes the description content from a q_item dictionary using GPT-4
+    without hallucinating or adding information not present in the original text.
+
+    Args:
+        q_item: A dictionary containing item data with description content
+
+    Returns:
+        A summarized version of the description content
+    """
+
+    # Initialize OpenAI client
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+    content = q_item['label']['contraindications']
+    content += q_item['label']['warningsAndPrecautions']
+
+    # If no label.description found, return empty string
+    if not content:
+        return ""
+
+    # Create a prompt that emphasizes summarization without hallucination
+    prompt = f"""
+You are a clinical documentation specialist. Your task is to extract and summarize the **contraindications** and **warnings or precautions** associated with the drug, based solely on the content provided below.
+
+Output Formatting Rules:
+- Return **only raw HTML** using the following allowed tags: `<p>`, `<ul>`, and `<li>`.
+- Do **not** include triple backticks (```) or any code block annotations (e.g., `html`).
+- Do **not** include any explanatory or extra text outside of the HTML itself.
+- Use `<p>` for section labels (e.g., “Contraindications” and “Warnings and Precautions”).
+- Use `<ul>` and `<li>` for listing individual contraindications or warnings.
+
+Clinical Guidelines:
+- Extract only what is explicitly mentioned in the input. Do **not** infer or add information not clearly stated.
+- Separate the following clearly:
+  - **Contraindications** (i.e., conditions or factors where use of the drug is prohibited)
+  - **Warnings and Precautions** (i.e., safety considerations, boxed warnings, monitoring needs, risk factors)
+- Preserve any severity or condition-specific language (e.g., “Severe hepatic impairment,” “Risk of QT prolongation”).
+- Exclude unrelated data (e.g., dosage or efficacy) unless it is directly tied to the warning or contraindication.
+- Do **not** use any external sources or general medical knowledge.
+
+## BEGIN Drug Data:
+${content}
+## END Drug Data
+"""
+
+    try:
+        print(f'Summarizing Uses and Conditions {q_item["drugName"]}...')
+        # Use GPT-4 for the best summarization quality
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                ChatCompletionSystemMessageParam(role="system", content=prompt),
+            ],
+            temperature=0.1,  # Low temperature for more deterministic output
+            max_tokens=500,
+            top_p=0.9
+        )
+
+        print(f'Summarized Uses and Conditions {q_item["drugName"]}...')
+
+        summary = response.choices[0].message.content.strip()
+        return summary
+
+    except Exception as e:
+        print(f"Error during summarization: {e}")
+        # Return a fallback summary or the original content
+        return f"Error in summarization: {str(e)}"
+
+
+def summarize_dosing(q_item: Dict[str, Any]) -> str:
+    """
+    Summarizes the description content from a q_item dictionary using GPT-4
+    without hallucinating or adding information not present in the original text.
+
+    Args:
+        q_item: A dictionary containing item data with description content
+
+    Returns:
+        A summarized version of the description content
+    """
+
+    # Initialize OpenAI client
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+    content = q_item['label']['dosageAndAdministration']
+    content += q_item['label']['dosageFormsAndStrengths']
+
+    # If no label.description found, return empty string
+    if not content:
+        return ""
+
+    # Create a prompt that emphasizes summarization without hallucination
+    prompt = f"""
+You are a clinical documentation specialist. Your task is to extract and summarize **dosing information** for the drug, based solely on the content provided below.
+
+Output Formatting Rules:
+- Return **only raw HTML** using the following allowed tags: `<p>`, `<ul>`, and `<li>`.
+- Do **not** wrap the output in triple backticks or any code block annotations.
+- Do **not** include explanatory text outside of the HTML.
+- Use `<p>` to introduce labeled sections (e.g., “Adult Dosing”, “Renal Impairment”).
+- Use `<ul>` and `<li>` for listing specific dose instructions, regimens, or population-specific details.
+
+Clinical Guidelines:
+- Use **only** the content provided. Do **not** refer to external sources or general drug knowledge.
+- Extract clear, structured details such as:
+  - Adult and pediatric dosing
+  - Initial and maintenance doses
+  - Frequency, route, and duration
+  - Dose adjustments for renal/hepatic impairment or other conditions
+- Preserve exact values (e.g., “200 mg once daily”) and qualifiers (e.g., “administer with food”).
+- Exclude unrelated information (e.g., indications, side effects) unless directly tied to dosing.
+
+## BEGIN Drug Data:
+${content}
+## END Drug Data
+
+"""
+
+    try:
+        print(f'Summarizing Uses and Conditions {q_item["drugName"]}...')
+        # Use GPT-4 for the best summarization quality
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                ChatCompletionSystemMessageParam(role="system", content=prompt),
+            ],
+            temperature=0.1,  # Low temperature for more deterministic output
+            max_tokens=500,
+            top_p=0.9
+        )
+
+        print(f'Summarized Uses and Conditions {q_item["drugName"]}...')
+
+        summary = response.choices[0].message.content.strip()
+        return summary
+
+    except Exception as e:
+        print(f"Error during summarization: {e}")
+        # Return a fallback summary or the original content
+        return f"Error in summarization: {str(e)}"

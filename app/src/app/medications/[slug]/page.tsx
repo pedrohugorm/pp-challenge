@@ -91,18 +91,25 @@ export default async function MedicationPage({ params }: MedicationPageProps) {
 
                                 <h2>Description</h2>
                                 <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['description'] as string) }}></div>
-                                <h2>1. Indications and Usage</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['indicationsAndUsage'] as string) }}></div>
-                                <h2>2. Dosage and Administration</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['dosageAndAdministration'] as string) }}></div>
-                                <h2>3. Dosage forms and Strengths</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['dosageFormsAndStrengths'] as string) }}></div>
-                                <h2>4. Contraindications</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['contraindications'] as string) }}></div>
-                                <h2>5. Warnings and Precautions</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['warningsAndPrecautions'] as string) }}></div>
-                                <h2>6. Adverse Reactions</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['adverseReactions'] as string) }}></div>
+                                <h2>Use and Conditions</h2>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['useAndConditions'] as string) }}></div>
+                                <h2>Contraindications and Warnings</h2>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['contraIndicationWarnings'] as string) }}></div>
+                                <h2>Dosing and administration</h2>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['dosing'] as string) }}></div>
+                                {/*<hr />*/}
+                                {/*<h2>1. Indications and Usage</h2>*/}
+                                {/*<div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['indicationsAndUsage'] as string) }}></div>*/}
+                                {/*<h2>2. Dosage and Administration</h2>*/}
+                                {/*<div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['dosageAndAdministration'] as string) }}></div>*/}
+                                {/*<h2>3. Dosage forms and Strengths</h2>*/}
+                                {/*<div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['dosageFormsAndStrengths'] as string) }}></div>*/}
+                                {/*<h2>4. Contraindications</h2>*/}
+                                {/*<div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['contraindications'] as string) }}></div>*/}
+                                {/*<h2>5. Warnings and Precautions</h2>*/}
+                                {/*<div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['warningsAndPrecautions'] as string) }}></div>*/}
+                                {/*<h2>6. Adverse Reactions</h2>*/}
+                                {/*<div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['adverseReactions'] as string) }}></div>*/}
                             </div>
                         </div>
                     </div>
