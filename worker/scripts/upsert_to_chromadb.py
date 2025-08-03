@@ -2,10 +2,13 @@ import os
 import chromadb
 from tiktoken import get_encoding
 from typing import List
+from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+import spacy
 
 # Constants
 MAX_TOKENS = 300  # Target chunk size
 ENCODING = get_encoding("cl100k_base")  # same as GPT-4 and gpt-3.5-turbo
+nlp = spacy.load("en_core_web_sm")
 
 def chunk_text(text: str, max_tokens: int) -> List[str]:
     """Split text into token-limited chunks."""
@@ -17,6 +20,38 @@ def chunk_text(text: str, max_tokens: int) -> List[str]:
         chunk = ENCODING.decode(tokens[start:end])
         chunks.append(chunk)
         start = end
+    return chunks
+
+def spacy_chunk_text(text: str, max_tokens: int = 300, overlap_tokens: int = 30):
+    doc = nlp(text)
+    sentences = [sent.text.strip() for sent in doc.sents]
+
+    chunks = []
+    current_chunk = []
+    current_tokens = 0
+
+    for sentence in sentences:
+        tokens = ENCODING.encode(sentence)
+        token_count = len(tokens)
+
+        if current_tokens + token_count <= max_tokens:
+            current_chunk.append(sentence)
+            current_tokens += token_count
+        else:
+            if current_chunk:
+                chunks.append(" ".join(current_chunk))
+            # Start new chunk with optional overlap
+            if overlap_tokens > 0 and current_chunk:
+                overlap = current_chunk[-1:]
+                current_chunk = overlap + [sentence]
+                current_tokens = len(ENCODING.encode(" ".join(current_chunk)))
+            else:
+                current_chunk = [sentence]
+                current_tokens = token_count
+
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+
     return chunks
 
 def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug_data"):
@@ -41,22 +76,17 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
     )
     print(f'Chroma DB: {client.database}')
     print(f'Chroma Tenant: {client.tenant}')
-    
-    # Get or create collection (uses default all-MiniLM-L6-v2 embeddings)
-    try:
-        print(f'Collection List: {client.list_collections()}')
-        collection = client.get_collection(name=collection_name)
-        print(f"Using existing collection: {collection_name}")
-    except Exception as e:
-        # Check if the error is specifically about collection not found
-        print(e)
-        if "not found" in str(e).lower() or "does not exist" in str(e).lower():
-            collection = client.create_collection(name=collection_name)
-            print(f"Created new collection: {collection_name}")
-        else:
-            # Re-raise other exceptions (connection issues, auth problems, etc.)
-            print(f"Error accessing ChromaDB: {e}")
-            raise
+
+    # Set up local embedding model
+    embedding_fn = SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+
+    # Get or create collection with embedding support
+    collection = client.get_or_create_collection(
+        name=collection_name,
+        embedding_function=embedding_fn
+    )
+
+    print(f"Collection ready: {collection_name}")
     
     # Prepare data for ChromaDB
     total_chunks = 0
@@ -118,8 +148,9 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
                 metadata[key] = value
         
         # Chunk the concatenated text
-        chunks = chunk_text(concatenated_text, MAX_TOKENS)
-        
+        # chunks = chunk_text(concatenated_text, MAX_TOKENS)
+        chunks = spacy_chunk_text(concatenated_text, max_tokens=MAX_TOKENS, overlap_tokens=30)
+
         # Add each chunk with the same id and metadata
         for idx, chunk in enumerate(chunks):
             chunk_id = f"{item['setId']}:chunk:{idx}"

@@ -9,6 +9,11 @@ export interface Medication {
     description: string;
     meta_description: string;
     blocks_json: Record<string, string>;
+    ai_description:string;
+    ai_warnings:string;
+    ai_dosing:string;
+    ai_use_and_conditions:string;
+    ai_contraindications:string;
 }
 
 export interface MedicationResponse {

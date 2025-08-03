@@ -102,6 +102,13 @@ def upsert_items_to_postgres(q_items, structured_items_json_array):
             contraindications = q_item['label'].get('contraindications', None)
             boxed_warning = q_item['label'].get('boxedWarning', None)
             meta_description = q_item.get('metaDescription', None)
+            
+            # Extract AI-generated fields
+            ai_warnings = q_item.get('warnings', None)
+            ai_dosing = q_item.get('dosing', None)
+            ai_use_and_conditions = q_item.get('useAndConditions', None)
+            ai_contraindications = q_item.get('contraIndications', None)
+            ai_description = q_item.get('description', None)
 
             # Use structured_item for highlights and blocks_json
             highlights = json.dumps(structured_item['label'].get('highlights', '{}'))
@@ -116,9 +123,9 @@ def upsert_items_to_postgres(q_items, structured_items_json_array):
                     clinical_pharmacology, clinical_studies, how_supplied,
                     use_in_specific_populations, description, nonclinical_toxicology,
                     instructions_for_use, mechanism_of_action, contraindications,
-                    boxed_warning, meta_description, highlights, blocks_json, created_at, updated_at
+                    boxed_warning, meta_description, ai_warnings, ai_dosing, ai_use_and_conditions, ai_contraindications, ai_description, highlights, blocks_json, created_at, updated_at
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
                 ) ON CONFLICT (id) DO UPDATE SET
                     name = EXCLUDED.name,
                     generic_name = EXCLUDED.generic_name,
@@ -143,6 +150,11 @@ def upsert_items_to_postgres(q_items, structured_items_json_array):
                     contraindications = EXCLUDED.contraindications,
                     boxed_warning = EXCLUDED.boxed_warning,
                     meta_description = EXCLUDED.meta_description,
+                    ai_warnings = EXCLUDED.ai_warnings,
+                    ai_dosing = EXCLUDED.ai_dosing,
+                    ai_use_and_conditions = EXCLUDED.ai_use_and_conditions,
+                    ai_contraindications = EXCLUDED.ai_contraindications,
+                    ai_description = EXCLUDED.ai_description,
                     highlights = EXCLUDED.highlights,
                     blocks_json = EXCLUDED.blocks_json,
                     updated_at = NOW();
@@ -175,6 +187,11 @@ def upsert_items_to_postgres(q_items, structured_items_json_array):
                     contraindications,
                     boxed_warning,
                     meta_description,
+                    ai_warnings,
+                    ai_dosing,
+                    ai_use_and_conditions,
+                    ai_contraindications,
+                    ai_description,
                     highlights,
                     blocks_json
                 )

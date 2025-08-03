@@ -1,14 +1,15 @@
 import {
   Controller,
   Get,
+  Post,
   Query,
   Param,
+  Body,
   NotFoundException,
-  UseInterceptors,
 } from '@nestjs/common';
 import { MedicationsService } from './medications.service';
 import { GetMedicationsDto } from './dto/get-medications.dto';
-import { CacheInterceptor } from '@nestjs/cache-manager';
+import { SearchMedicationsDto } from './dto/search-medications.dto';
 
 export interface MedicationsResponse {
   medications: any[];
@@ -27,6 +28,23 @@ export class MedicationsController {
     const result = await this.medicationsService.getMedications(
       query.cursor,
       query.limit,
+    );
+
+    return {
+      medications: result.medications,
+      nextCursor: result.nextCursor,
+      hasMore: result.hasMore,
+    };
+  }
+
+  @Post('search')
+  async searchMedications(
+    @Body() searchDto: SearchMedicationsDto,
+  ): Promise<MedicationsResponse> {
+    const result = await this.medicationsService.searchMedications(
+      searchDto.query,
+      searchDto.cursor,
+      searchDto.limit,
     );
 
     return {

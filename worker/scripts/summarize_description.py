@@ -15,7 +15,7 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
 
-async def summarize_description(q_item: Dict[str, Any]) -> str:
+async def summarize_meta_description(q_item: Dict[str, Any]) -> str:
     """
     Summarizes the description content from a q_item dictionary using GPT-4
     without hallucinating or adding information not present in the original text.
@@ -76,6 +76,90 @@ Strict Limitations:
         model = "gpt-4o"
         rate_limiter = get_rate_limiter(model)
         
+        # Use rate limiter before making the API call
+        async with rate_limiter:
+            # Use GPT-4 for the best summarization quality
+            response = await client.chat.completions.create(
+                model=model,
+                messages=[
+                    ChatCompletionSystemMessageParam(role="system", content="You are a precise summarization assistant. Your task is to create accurate, concise summaries that contain only information explicitly stated in the source text. Never add facts, details, or information that is not present in the original content. Focus on extracting and condensing the key information while maintaining factual accuracy."),
+                    ChatCompletionUserMessageParam(role="user", content=prompt)
+                ],
+                temperature=0.1,  # Low temperature for more deterministic output
+                max_tokens=500,  # Reasonable limit for summaries
+            )
+
+        print(f'Summarized {q_item["drugName"]}...')
+
+        summary = response.choices[0].message.content.strip()
+        return summary
+
+    except Exception as e:
+        print(f"Error during summarization: {e}")
+        # Return a fallback summary or the original content
+        return f"Error in summarization: {str(e)}"
+
+
+async def summarize_description(q_item: Dict[str, Any]) -> str:
+    """
+    Summarizes the description content from a q_item dictionary using GPT-4
+    without hallucinating or adding information not present in the original text.
+
+    Args:
+        q_item: A dictionary containing item data with description content
+
+    Returns:
+        A summarized version of the description content
+    """
+
+    # Initialize OpenAI client
+    client = AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+    # Extract description content from q_item
+    # Only grab the label.description value
+    description_content = ""
+
+    if 'label' in q_item and isinstance(q_item['label'], dict):
+        if 'description' in q_item['label']:
+            description_content = q_item['label']['description']
+
+    # If no label.description found, return empty string
+    if not description_content:
+        return ""
+
+    # Create a prompt that emphasizes summarization without hallucination
+    prompt = f"""
+Please summarize the following content accurately and concisely.
+
+IMPORTANT:
+- Only include information explicitly stated in the original text.
+- Do NOT add any facts, details, or information not present in the source material.
+- Do NOT infer, interpret, or reword content beyond what is directly stated.
+
+Output Formatting Rules:
+- Return only raw HTML using the allowed tags: <p>, <ul>, and <li>.
+- Do not wrap the output in triple backticks or any code block annotations.
+- Do not include any explanatory text outside of the HTML.
+- Use <p> if needed to wrap the entire summary. Do not use any other tags.
+
+Strict Limitations:
+- You must not use any HTML tags besides <p>, <ul>, and <li>. Prohibited tags include <b>, <strong>, <em>, <span>, <div>, <h1>–<h6>, <br>, <sup>, <sub>, <table>, and others.
+- Do not use HTML entities (e.g., &nbsp;, &copy;). Use plain characters only.
+- Do not nest <p> tags inside <li> elements. Each <li> must contain plain text only.
+- Do not include tag attributes, classes, or styles.
+
+## Original content:
+{description_content}
+### END OF Original content
+"""
+
+    try:
+        print(f'Summarizing {q_item["drugName"]}...')
+
+        # Get rate limiter for the model
+        model = "gpt-4o"
+        rate_limiter = get_rate_limiter(model)
+
         # Use rate limiter before making the API call
         async with rate_limiter:
             # Use GPT-4 for the best summarization quality

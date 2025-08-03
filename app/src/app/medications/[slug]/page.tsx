@@ -87,18 +87,18 @@ export default async function MedicationPage({ params }: MedicationPageProps) {
                                 <p>Product type: {medication.product_type}</p>
                                 <p>Effective date: {new Date(medication.effective_time).toLocaleDateString()}</p>
 
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['labeler'] as string) }}></div>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.labeler.name) }}></div>
 
                                 <h2>Description</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['description'] as string) }}></div>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.ai_description) }}></div>
                                 <h2>Use and Conditions</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['useAndConditions'] as string) }}></div>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.ai_use_and_conditions) }}></div>
                                 <h2>Dosing and Administration</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['dosing'] as string) }}></div>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.ai_dosing) }}></div>
                                 <h2>Contraindications</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['contraIndications'] as string) }}></div>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.ai_contraindications) }}></div>
                                 <h2>Warnings</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['warnings'] as string) }}></div>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.ai_warnings) }}></div>
 
                                 {/*<hr />*/}
                                 {/*<h2>1. Indications and Usage</h2>*/}

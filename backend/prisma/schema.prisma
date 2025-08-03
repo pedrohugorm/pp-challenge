@@ -48,6 +48,11 @@ model Drug {
   meta_description            String?
   highlights                  Json?
   blocks_json                 Json?
+  ai_warnings                 String?
+  ai_dosing                   String?
+  ai_use_and_conditions      String?
+  ai_contraindications       String?
+  ai_description              String?
   created_at                  DateTime  @default(now())
   updated_at                  DateTime  @updatedAt
 

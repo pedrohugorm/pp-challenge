@@ -9,10 +9,11 @@ from scripts.clean_json_html import clean_json_html
 from scripts.enhance_content import enhance_content
 from scripts.structure_json_html import structure_json_html
 from scripts.prepare_item_for_vector_search import prepare_item_for_vector_search
-from scripts.summarize_description import summarize_description, summarize_use_and_conditions, summarize_contra_indications, summarize_dosing, summarize_warnings
+from scripts.summarize_description import summarize_meta_description, summarize_use_and_conditions, summarize_contra_indications, summarize_dosing, summarize_warnings, summarize_description
 from scripts.upsert_to_chromadb import upsert_q_items_to_chromadb
 from scripts.upsert_items_to_postgres import upsert_items_to_postgres
 from scripts.fix_html_syntax import fix_html_syntax
+from scripts.find_similar_drugs_by_name import find_similar_drugs_by_name
 
 # Load environment variables from .env file in the parent directory (project root)
 load_dotenv('../.env')
@@ -56,7 +57,8 @@ async def process_single_item(item):
     q_item = prepare_item_for_vector_search(item)
 
     # Run all summarize functions in parallel
-    summary, use_and_conditions, contra_indications_warnings, warnings, dosing = await asyncio.gather(
+    summary, description, use_and_conditions, contra_indications_warnings, warnings, dosing = await asyncio.gather(
+        summarize_meta_description(q_item),
         summarize_description(q_item),
         summarize_use_and_conditions(q_item),
         summarize_contra_indications(q_item),
@@ -66,6 +68,9 @@ async def process_single_item(item):
 
     q_item['metaDescription'] = summary
     item['label']['metaDescription'] = summary
+
+    q_item['description'] = description
+    item['label']['description'] = description
 
     q_item['useAndConditions'] = use_and_conditions
     item['label']['useAndConditions'] = use_and_conditions
@@ -95,7 +100,7 @@ async def main():
         json_array = json.load(f)
         
         # Filter items if needed (uncomment the line below if you want to process only specific items)
-        json_array = [item for item in json_array if item['drugName'] in 'Olumiant']
+        # json_array = [item for item in json_array if item['drugName'] in 'Emgality']
         
         # Process all items in parallel
         print(f"Processing {len(json_array)} items in parallel...")
@@ -120,6 +125,10 @@ async def main():
     upsert_q_items_to_chromadb(q_items)
 
     upsert_items_to_postgres(q_items, structured_items_json_array)
+
+    for q_item in q_items:
+        similar_items = find_similar_drugs_by_name(q_item['drugName'])
+        print(f'{q_item["drugName"]} has {len(similar_items)} similar items: {similar_items}')
 
     print("Function executed successfully!")
 
