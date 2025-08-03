@@ -6,6 +6,7 @@ import os
 import json
 from dotenv import load_dotenv
 from scripts.clean_json_html import clean_json_html
+from scripts.enhance_content import enhance_content
 from scripts.structure_json_html import structure_json_html
 from scripts.prepare_item_for_qdrant import prepare_item_for_qdrant
 from scripts.summarize_description import summarize_description
@@ -31,18 +32,23 @@ async def main():
     with open("./data/Labels.json", "r", encoding="utf-8") as f:
         json_array = json.load(f)
         for item in json_array:
-            # if item['drugName'] not in 'Jaypirca':
-            #     continue
+            if item['drugName'] not in 'Trulicity Demo Pen':
+                continue
             item = clean_json_html(item)
             item = fix_html_syntax(item)
 
-            structured_item = structure_json_html(item)
+            item['label']['description'] = enhance_content(item['label']['description'])
+            item['label']['indicationsAndUsage'] = enhance_content(item['label']['indicationsAndUsage'])
+            item['label']['dosageAndAdministration'] = enhance_content(item['label']['dosageAndAdministration'])
+            item['label']['adverseReactions'] = enhance_content(item['label']['adverseReactions'])
+
+            # structured_item = structure_json_html(item)
             q_item = prepare_item_for_qdrant(item)
             summary = summarize_description(q_item)
             q_item['metaDescription'] = summary
 
             items.append(item)
-            structured_items_json_array.append(structured_item)
+            structured_items_json_array.append(item)
             q_items.append(q_item)
 
     with open("./data/items.json", "w", encoding="utf-8") as outfile:

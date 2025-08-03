@@ -63,7 +63,7 @@ export function renderBlock({block, headerOffset}: RenderBlockProps): React.Reac
     // Validate that type is a valid block type for fallback
     const validBlockTypes = [
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'strong', 'em',
-        'ul', 'ol', 'li', 'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'mark', 'embed-medication', '[document]'
+        'ul', 'ol', 'li', 'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'mark', 'sup', 'embed-medication', '[document]'
     ];
 
     if (!validBlockTypes.includes(type)) {
@@ -141,6 +141,8 @@ const Mark = ({format, children}: { format: string; children: React.ReactNode })
             return <code>{children}</code>;
         case 'mark':
             return <mark>{children}</mark>;
+        case 'sup':
+            return <sup>{children}</sup>;
         default:
             return <span>{children}</span>;
     }
@@ -199,6 +201,7 @@ const getComponentMap = (block: BlockContent, headerOffset: number): Record<stri
     'em': ({children}: { children: React.ReactNode }) => <Mark format="em">{children}</Mark>,
     'code': ({children}: { children: React.ReactNode }) => <Mark format="code">{children}</Mark>,
     'mark': ({children}: { children: React.ReactNode }) => <Mark format="mark">{children}</Mark>,
+    'sup': ({children}: { children: React.ReactNode }) => <Mark format="sup">{children}</Mark>,
     'embed-medication': ({contents}: { contents: (string | BlockContent | EmbedMedicationData)[] }) => <EmbedMedication
         contents={contents}/>,
     '[document]': ({children}: { children: React.ReactNode }) => <Document>{children}</Document>

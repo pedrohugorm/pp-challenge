@@ -36,7 +36,7 @@ export class MedicationsController {
     };
   }
 
-  @UseInterceptors(CacheInterceptor)
+  // @UseInterceptors(CacheInterceptor)
   @Get(':slug')
   async getMedicationBySlug(@Param('slug') slug: string) {
     const medication = await this.medicationsService.getMedicationBySlug(slug);
