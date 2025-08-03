@@ -1,4 +1,10 @@
-import { Controller, Get, Query, Param, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  Param,
+  NotFoundException,
+} from '@nestjs/common';
 import { MedicationsService } from './medications.service';
 import { GetMedicationsDto } from './dto/get-medications.dto';
 
