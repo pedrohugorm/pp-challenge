@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import {fetchMedicationBySlug} from '@/services/medicationService';
-import {notFound} from 'next/navigation';
+import { fetchMedicationBySlug } from '@/services/medicationService';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import MedicationHeader from '@/components/MedicationHeader';
+import MedicationAssistant from '@/components/MedicationAssistant';
 import DOMPurify from "dompurify";
 import { JSDOM } from 'jsdom';
 
@@ -29,7 +30,7 @@ async function getMedicationData(slug: string) {
 export async function generateMetadata({ params }: MedicationPageProps): Promise<Metadata> {
     const resolvedParams = await params;
     const medication = await getMedicationData(resolvedParams.slug);
-    
+
     if (!medication) {
         return {
             title: 'Medication Not Found',
@@ -37,17 +38,17 @@ export async function generateMetadata({ params }: MedicationPageProps): Promise
     }
 
     return {
-        title: medication.name,
+        title: `${medication.name} - ${medication.labeler.name}`,
         description: medication.description,
     };
 }
 
-const cleanHtml = (html:string) => {
+const cleanHtml = (html: string) => {
     const window = new JSDOM('').window;
     return DOMPurify(window).sanitize(html);
 }
 
-export default async function MedicationPage({params}: MedicationPageProps) {
+export default async function MedicationPage({ params }: MedicationPageProps) {
     const resolvedParams = await params;
     const medication = await getMedicationData(resolvedParams.slug);
 
@@ -58,46 +59,57 @@ export default async function MedicationPage({params}: MedicationPageProps) {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 medication-document">
-            {/* Medication Header - Full Width */}
-            <MedicationHeader title="Medication Search" />
-            
-            <div className="max-w-4xl mx-auto px-4 py-8">
-                {/* Back Button */}
-                <div className="mb-6">
-                    <Link
-                        href="/"
-                        className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/>
-                        </svg>
-                        Back to Medications
-                    </Link>
+        <div className="min-h-screen bg-gray-50">
+            <div className="flex h-screen">
+                {/* Main Content - Medication Details */}
+                <div className="flex-1 flex flex-col">
+                    <MedicationHeader title="Medication Search" />
+
+                    <div className="flex-1 p-4 lg:p-6 overflow-y-auto">
+                        <div className="max-w-4xl mx-auto medication-document">
+                            {/* Back Button */}
+                            <div className="mb-6">
+                                <Link
+                                    href="/"
+                                    className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium"
+                                >
+                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                    Back to Medications
+                                </Link>
+                            </div>
+
+                            <div>
+                                <h1>{medication.name}</h1>
+                                <p>Labeler: {medication.labeler.name}</p>
+                                <p>Generic name: {medication.generic_name}</p>
+                                <p>Product type: {medication.product_type}</p>
+                                <p>Effective date: {new Date(medication.effective_time).toLocaleDateString()}</p>
+
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['labeler'] as string) }}></div>
+
+                                <h2>Description</h2>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['description'] as string) }}></div>
+                                <h2>1. Indications and Usage</h2>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['indicationsAndUsage'] as string) }}></div>
+                                <h2>2. Dosage and Administration</h2>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['dosageAndAdministration'] as string) }}></div>
+                                <h2>3. Dosage forms and Strengths</h2>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['dosageFormsAndStrengths'] as string) }}></div>
+                                <h2>4. Contraindications</h2>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['contraindications'] as string) }}></div>
+                                <h2>5. Warnings and Precautions</h2>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['warningsAndPrecautions'] as string) }}></div>
+                                <h2>6. Adverse Reactions</h2>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['adverseReactions'] as string) }}></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <h1>{medication.name}</h1>
-                <p>Labeler: {medication.labeler.name}</p>
-                <p>Generic name: {medication.generic_name}</p>
-                <p>Product type: {medication.product_type}</p>
-                <p>Effective date: {new Date(medication.effective_time).toLocaleDateString()}</p>
-
-                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['labeler'] as string) }}></div>
-
-                <h2>Description</h2>
-                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['description'] as string) }}></div>
-                <h2>1. Indications and Usage</h2>
-                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['indicationsAndUsage'] as string) }}></div>
-                <h2>2. Dosage and Administration</h2>
-                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['dosageAndAdministration'] as string) }}></div>
-                <h2>3. Dosage forms and Strengths</h2>
-                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['dosageFormsAndStrengths'] as string) }}></div>
-                <h2>4. Contraindications</h2>
-                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['contraindications'] as string) }}></div>
-                <h2>5. Warnings and Precautions</h2>
-                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['warningsAndPrecautions'] as string) }}></div>
-                <h2>6. Adverse Reactions</h2>
-                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['adverseReactions'] as string) }}></div>
+                {/* Chat Sidebar - Hidden on mobile, visible on desktop */}
+                <MedicationAssistant />
             </div>
         </div>
     );

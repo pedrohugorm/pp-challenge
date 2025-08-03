@@ -1,3 +1,4 @@
+"use client"
 import React, { useState, useEffect } from 'react';
 import ChatBalloon, { ChatBlock } from './ChatBalloon';
 import { chatService, ContextItem } from '@/services/chatService';

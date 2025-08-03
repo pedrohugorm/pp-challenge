@@ -32,8 +32,8 @@ async def main():
     with open("./data/Labels.json", "r", encoding="utf-8") as f:
         json_array = json.load(f)
         for item in json_array:
-            if item['drugName'] not in 'Trulicity Demo Pen':
-                continue
+            # if item['drugName'] not in 'Trulicity Demo Pen':
+            #     continue
             item = clean_json_html(item)
             item = fix_html_syntax(item)
 

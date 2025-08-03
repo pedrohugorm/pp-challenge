@@ -65,6 +65,7 @@ export class ChatService {
         { role: 'user', content: prompt },
       ],
       tools: getTools(),
+      temperature: 0.2,
       store: true,
     });
 
@@ -98,6 +99,7 @@ export class ChatService {
                 { role: 'user', content: getReviewUserPrompt(prompt) },
               ],
               store: true,
+              temperature: 0.2,
               response_format: zodResponseFormat(
                 MedicationListResponseSchema,
                 'medications',
