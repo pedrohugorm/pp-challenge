@@ -14,6 +14,7 @@ export interface Medication {
     ai_dosing:string;
     ai_use_and_conditions:string;
     ai_contraindications:string;
+    vector_similar_ranking: Record<string, number>;
 }
 
 export interface MedicationResponse {

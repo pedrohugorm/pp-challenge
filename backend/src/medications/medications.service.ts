@@ -46,7 +46,6 @@ export class MedicationsService {
         title: true,
         slug: true,
         updated_at: true,
-        blocks_json: true,
         meta_description: true,
         labeler: {
           select: {
@@ -95,6 +94,7 @@ export class MedicationsService {
         ai_use_and_conditions: true,
         ai_contraindications: true,
         ai_description: true,
+        vector_similar_ranking: true,
         labeler: {
           select: {
             id: true,
@@ -180,13 +180,13 @@ export class MedicationsService {
         title: true,
         slug: true,
         updated_at: true,
-        blocks_json: true,
         meta_description: true,
         ai_warnings: true,
         ai_dosing: true,
         ai_use_and_conditions: true,
         ai_contraindications: true,
         ai_description: true,
+        vector_similar_ranking: true,
         labeler: {
           select: {
             id: true,

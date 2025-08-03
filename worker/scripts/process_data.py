@@ -14,6 +14,7 @@ from scripts.upsert_to_chromadb import upsert_q_items_to_chromadb
 from scripts.upsert_items_to_postgres import upsert_items_to_postgres
 from scripts.fix_html_syntax import fix_html_syntax
 from scripts.find_similar_drugs_by_name import find_similar_drugs_by_name
+from scripts.update_vector_similar_ranking import update_vector_similar_ranking
 
 # Load environment variables from .env file in the parent directory (project root)
 load_dotenv('../.env')
@@ -100,7 +101,7 @@ async def main():
         json_array = json.load(f)
         
         # Filter items if needed (uncomment the line below if you want to process only specific items)
-        json_array = [item for item in json_array if item['drugName'] in 'Ebglyss']
+        # json_array = [item for item in json_array if item['drugName'] in 'Ebglyss']
         
         # Process all items in parallel
         print(f"Processing {len(json_array)} items in parallel...")
@@ -128,6 +129,7 @@ async def main():
 
     for q_item in q_items:
         similar_items = find_similar_drugs_by_name(q_item['drugName'])
+        update_vector_similar_ranking(q_item['setId'], similar_items)
         print(f'{q_item["drugName"]} has {len(similar_items)} similar items: {similar_items}')
 
     print("Function executed successfully!")

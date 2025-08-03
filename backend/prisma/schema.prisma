@@ -53,6 +53,7 @@ model Drug {
   ai_use_and_conditions      String?
   ai_contraindications       String?
   ai_description              String?
+  vector_similar_ranking      Json?
   created_at                  DateTime  @default(now())
   updated_at                  DateTime  @updatedAt
 
