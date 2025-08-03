@@ -34,7 +34,6 @@
     "@nestjs/platform-express": "^11.0.1",
     "@prisma/client": "^6.13.0",
     "@rekog/mcp-nest": "^1.7.2",
-    "cache-manager": "^7.1.0",
     "chromadb": "^1.10.5",
     "chromadb-default-embed": "^2.14.0",
     "class-transformer": "^0.5.1",
