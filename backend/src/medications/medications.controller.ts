@@ -4,9 +4,11 @@ import {
   Query,
   Param,
   NotFoundException,
+  UseInterceptors,
 } from '@nestjs/common';
 import { MedicationsService } from './medications.service';
 import { GetMedicationsDto } from './dto/get-medications.dto';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 export interface MedicationsResponse {
   medications: any[];
@@ -34,6 +36,7 @@ export class MedicationsController {
     };
   }
 
+  @UseInterceptors(CacheInterceptor)
   @Get(':slug')
   async getMedicationBySlug(@Param('slug') slug: string) {
     const medication = await this.medicationsService.getMedicationBySlug(slug);
