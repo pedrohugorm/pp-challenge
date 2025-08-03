@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ChatBalloon, { ChatBlock } from './ChatBalloon';
 import { chatService, ContextItem } from '@/services/chatService';
 
@@ -19,6 +19,7 @@ export default function MedicationAssistant() {
     const [messageText, setMessageText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [contextList, setContextList] = useState<ContextItem[]>([]);
+    const chatContainerRef = useRef<HTMLDivElement>(null);
 
     // Load state from localStorage on component mount
     useEffect(() => {
@@ -155,6 +156,13 @@ export default function MedicationAssistant() {
         }
     };
 
+    // Auto-scroll to bottom when chat blocks change
+    useEffect(() => {
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+    }, [chatBlocks, isLoading]);
+
     return (
         <div className="hidden lg:flex w-80 bg-white border-l border-gray-200 flex-col">
             <div className="p-4 border-b border-gray-200">
@@ -172,7 +180,7 @@ export default function MedicationAssistant() {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
                 {chatBlocks.length === 0 ? (
                     <ChatBalloon block={assistantMessage} />
                 ) : (
