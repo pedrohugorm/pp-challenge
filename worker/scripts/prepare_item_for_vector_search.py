@@ -1,7 +1,7 @@
 import json
 from bs4 import BeautifulSoup
 
-def prepare_item_for_qdrant(obj):
+def prepare_item_for_vector_search(obj):
     """
     Recursively processes a JSON object, removing HTML tags from string values
     and adding line breaks after each tag's text content.
@@ -13,9 +13,9 @@ def prepare_item_for_qdrant(obj):
         The processed object with HTML tags removed and line breaks added
     """
     if isinstance(obj, dict):
-        return {k: prepare_item_for_qdrant(v) for k, v in obj.items()}
+        return {k: prepare_item_for_vector_search(v) for k, v in obj.items()}
     elif isinstance(obj, list):
-        return [prepare_item_for_qdrant(item) for item in obj]
+        return [prepare_item_for_vector_search(item) for item in obj]
     elif isinstance(obj, str):
         # Parse HTML with BeautifulSoup
         soup = BeautifulSoup(obj, 'html.parser')

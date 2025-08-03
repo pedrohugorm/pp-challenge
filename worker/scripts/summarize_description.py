@@ -1,9 +1,11 @@
 import os
 import sys
+import asyncio
 from typing import Dict, Any
-from openai import OpenAI
+from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
+from rate_limiter import get_rate_limiter
 
 # Load environment variables from .env file in the parent directory (project root)
 load_dotenv('../.env')
@@ -13,7 +15,7 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
 
-def summarize_description(q_item: Dict[str, Any]) -> str:
+async def summarize_description(q_item: Dict[str, Any]) -> str:
     """
     Summarizes the description content from a q_item dictionary using GPT-4
     without hallucinating or adding information not present in the original text.
@@ -26,7 +28,7 @@ def summarize_description(q_item: Dict[str, Any]) -> str:
     """
 
     # Initialize OpenAI client
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    client = AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
     # Extract description content from q_item
     # Only grab the label.description value
@@ -69,16 +71,23 @@ Strict Limitations:
 
     try:
         print(f'Summarizing {q_item["drugName"]}...')
-        # Use GPT-4 for the best summarization quality
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                ChatCompletionSystemMessageParam(role="system", content="You are a precise summarization assistant. Your task is to create accurate, concise summaries that contain only information explicitly stated in the source text. Never add facts, details, or information that is not present in the original content. Focus on extracting and condensing the key information while maintaining factual accuracy."),
-                ChatCompletionUserMessageParam(role="user", content=prompt)
-            ],
-            temperature=0.1,  # Low temperature for more deterministic output
-            max_tokens=500,  # Reasonable limit for summaries
-        )
+        
+        # Get rate limiter for the model
+        model = "gpt-4o"
+        rate_limiter = get_rate_limiter(model)
+        
+        # Use rate limiter before making the API call
+        async with rate_limiter:
+            # Use GPT-4 for the best summarization quality
+            response = await client.chat.completions.create(
+                model=model,
+                messages=[
+                    ChatCompletionSystemMessageParam(role="system", content="You are a precise summarization assistant. Your task is to create accurate, concise summaries that contain only information explicitly stated in the source text. Never add facts, details, or information that is not present in the original content. Focus on extracting and condensing the key information while maintaining factual accuracy."),
+                    ChatCompletionUserMessageParam(role="user", content=prompt)
+                ],
+                temperature=0.1,  # Low temperature for more deterministic output
+                max_tokens=500,  # Reasonable limit for summaries
+            )
 
         print(f'Summarized {q_item["drugName"]}...')
 
@@ -91,7 +100,7 @@ Strict Limitations:
         return f"Error in summarization: {str(e)}"
 
 
-def summarize_use_and_conditions(q_item: Dict[str, Any]) -> str:
+async def summarize_use_and_conditions(q_item: Dict[str, Any]) -> str:
     """
     Summarizes the description content from a q_item dictionary using GPT-4
     without hallucinating or adding information not present in the original text.
@@ -104,7 +113,7 @@ def summarize_use_and_conditions(q_item: Dict[str, Any]) -> str:
     """
 
     # Initialize OpenAI client
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    client = AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
     content = q_item['label']['indicationsAndUsage']
     content += q_item['label']['dosageAndAdministration']
@@ -121,7 +130,7 @@ Output Formatting Rules:
 - Return **only raw HTML** using these allowed tags: `<p>`, `<ul>`, and `<li>`.
 - Do **not** wrap the output in triple backticks (```) or any language annotations like `html`.
 - Do **not** include any extraneous text before or after the HTML (e.g., explanations, labels, or markdown).
-- Wrap section headings (e.g., “Approved Indications”) in `<h3>` tags.
+- Wrap section headings (e.g., "Approved Indications") in `<h3>` tags.
 - Use `<ul>` and `<li>` for lists of specific indications or conditions.
 
 Additional Restrictions:
@@ -143,21 +152,28 @@ Clinical Guidelines:
 - Exclude unrelated clinical details (e.g., dosage, pharmacokinetics) unless directly stated within an indication.
 
 ## BEGIN Drug Data:
-${content}
+{content}
 ## END Drug Data
 """
 
     try:
         print(f'Summarizing Uses and Conditions {q_item["drugName"]}...')
-        # Use GPT-4 for the best summarization quality
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                ChatCompletionSystemMessageParam(role="system", content=prompt),
-            ],
-            temperature=0.1,  # Low temperature for more deterministic output
-            max_tokens=500,
-        )
+        
+        # Get rate limiter for the model
+        model = "gpt-4o"
+        rate_limiter = get_rate_limiter(model)
+        
+        # Use rate limiter before making the API call
+        async with rate_limiter:
+            # Use GPT-4 for the best summarization quality
+            response = await client.chat.completions.create(
+                model=model,
+                messages=[
+                    ChatCompletionSystemMessageParam(role="system", content=prompt),
+                ],
+                temperature=0.1,  # Low temperature for more deterministic output
+                max_tokens=500,
+            )
 
         print(f'Summarized Uses and Conditions {q_item["drugName"]}...')
 
@@ -170,7 +186,7 @@ ${content}
         return f"Error in summarization: {str(e)}"
 
 
-def summarize_contra_indications(q_item: Dict[str, Any]) -> str:
+async def summarize_contra_indications(q_item: Dict[str, Any]) -> str:
     """
     Summarizes the description content from a q_item dictionary using GPT-4
     without hallucinating or adding information not present in the original text.
@@ -183,7 +199,7 @@ def summarize_contra_indications(q_item: Dict[str, Any]) -> str:
     """
 
     # Initialize OpenAI client
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    client = AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
     content = q_item['label']['contraindications']
     # content += q_item['label']['warningsAndPrecautions']
@@ -197,11 +213,16 @@ def summarize_contra_indications(q_item: Dict[str, Any]) -> str:
 You are a clinical documentation specialist. Your task is to extract and summarize the **contraindications** associated with the drug, based solely on the content provided below.
 
 Output Formatting Rules:
-- Return **only raw HTML** using the following allowed tags: `<p>`, `<ul>`, and `<li>`.
+- Return **only raw HTML** using the following allowed tags: `<p>`, `<ul>`, and `<li>`, `<h3>`.
 - Do **not** include triple backticks (```) or any code block annotations (e.g., `html`).
 - Do **not** include any explanatory or extra text outside of the HTML itself.
-- Use `<h3>` for section labels (e.g., “Contraindications” and “Warnings and Precautions”).
+- Use `<h3>` for section labels (e.g., "Contraindications").
 - Use `<ul>` and `<li>` for listing individual contraindications or warnings.
+
+When No Contraindications Are Found:
+- If no contraindications are explicitly stated in the input, return exactly the following:
+
+`<p>No contraindications</p>`
 
 Additional Restrictions:
 - You must not use any HTML tags other than <p>, <ul>, and <li>. Prohibited tags include (but are not limited to): <b>, <strong>, <em>, <i>, <u>, <span>, <div>, <h1>–<h6>, <br>, <sup>, <sub>, <table>, <ol>, <blockquote>, <code>, and <style>.
@@ -215,26 +236,33 @@ Clinical Guidelines:
 - Extract only what is explicitly mentioned in the input. Do **not** infer or add information not clearly stated.
 - Separate the following clearly:
   - **Contraindications** (i.e., conditions or factors where use of the drug is prohibited)
-- Preserve any severity or condition-specific language (e.g., “Severe hepatic impairment,” “Risk of QT prolongation”).
+- Preserve any severity or condition-specific language (e.g., "Severe hepatic impairment," "Risk of QT prolongation").
 - Exclude unrelated data (e.g., dosage or efficacy) unless it is directly tied to the contraindication.
 - Do **not** use any external sources or general medical knowledge.
 
 ## BEGIN Drug Data:
-${content}
+{content}
 ## END Drug Data
 """
 
     try:
         print(f'Summarizing Uses and Conditions {q_item["drugName"]}...')
-        # Use GPT-4 for the best summarization quality
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                ChatCompletionSystemMessageParam(role="system", content=prompt),
-            ],
-            temperature=0.1,  # Low temperature for more deterministic output
-            max_tokens=500,
-        )
+        
+        # Get rate limiter for the model
+        model = "gpt-4o"
+        rate_limiter = get_rate_limiter(model)
+        
+        # Use rate limiter before making the API call
+        async with rate_limiter:
+            # Use GPT-4 for the best summarization quality
+            response = await client.chat.completions.create(
+                model=model,
+                messages=[
+                    ChatCompletionSystemMessageParam(role="system", content=prompt),
+                ],
+                temperature=0.1,  # Low temperature for more deterministic output
+                max_tokens=500,
+            )
 
         print(f'Summarized Uses and Conditions {q_item["drugName"]}...')
 
@@ -246,7 +274,7 @@ ${content}
         # Return a fallback summary or the original content
         return f"Error in summarization: {str(e)}"
 
-def summarize_warnings(q_item: Dict[str, Any]) -> str:
+async def summarize_warnings(q_item: Dict[str, Any]) -> str:
     """
     Summarizes the description content from a q_item dictionary using GPT-4
     without hallucinating or adding information not present in the original text.
@@ -259,7 +287,7 @@ def summarize_warnings(q_item: Dict[str, Any]) -> str:
     """
 
     # Initialize OpenAI client
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    client = AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
     content = q_item['label']['warningsAndPrecautions']
 
@@ -272,10 +300,10 @@ def summarize_warnings(q_item: Dict[str, Any]) -> str:
 You are a clinical documentation specialist. Your task is to extract and summarize the **warnings or precautions** associated with the drug, based solely on the content provided below.
 
 Output Formatting Rules:
-- Return **only raw HTML** using the following allowed tags: `<p>`, `<ul>`, and `<li>`.
+- Return **only raw HTML** using the following allowed tags: `<p>`, `<ul>`, and `<li>`, `<h3>`.
 - Do **not** include triple backticks (```) or any code block annotations (e.g., `html`).
 - Do **not** include any explanatory or extra text outside of the HTML itself.
-- Use `<h3>` for section labels (e.g., “Contraindications” and “Warnings and Precautions”).
+- Use `<h3>` for section labels (e.g., "Warnings and Precautions").
 - Use `<ul>` and `<li>` for listing individual contraindications or warnings.
 
 Additional Restrictions:
@@ -290,26 +318,33 @@ Clinical Guidelines:
 - Extract only what is explicitly mentioned in the input. Do **not** infer or add information not clearly stated.
 - Separate the following clearly:
   - **Warnings and Precautions** (i.e., safety considerations, boxed warnings, monitoring needs, risk factors)
-- Preserve any severity or condition-specific language (e.g., “Severe hepatic impairment,” “Risk of QT prolongation”).
+- Preserve any severity or condition-specific language (e.g., "Severe hepatic impairment," "Risk of QT prolongation").
 - Exclude unrelated data (e.g., dosage or efficacy) unless it is directly tied to the warning.
 - Do **not** use any external sources or general medical knowledge.
 
 ## BEGIN Drug Data:
-${content}
+{content}
 ## END Drug Data
 """
 
     try:
         print(f'Summarizing Uses and Conditions {q_item["drugName"]}...')
-        # Use GPT-4 for the best summarization quality
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                ChatCompletionSystemMessageParam(role="system", content=prompt),
-            ],
-            temperature=0.1,  # Low temperature for more deterministic output
-            max_tokens=500,
-        )
+        
+        # Get rate limiter for the model
+        model = "gpt-4o"
+        rate_limiter = get_rate_limiter(model)
+        
+        # Use rate limiter before making the API call
+        async with rate_limiter:
+            # Use GPT-4 for the best summarization quality
+            response = await client.chat.completions.create(
+                model=model,
+                messages=[
+                    ChatCompletionSystemMessageParam(role="system", content=prompt),
+                ],
+                temperature=0.1,  # Low temperature for more deterministic output
+                max_tokens=500,
+            )
 
         print(f'Summarized Uses and Conditions {q_item["drugName"]}...')
 
@@ -322,7 +357,7 @@ ${content}
         return f"Error in summarization: {str(e)}"
 
 
-def summarize_dosing(q_item: Dict[str, Any]) -> str:
+async def summarize_dosing(q_item: Dict[str, Any]) -> str:
     """
     Summarizes the description content from a q_item dictionary using GPT-4
     without hallucinating or adding information not present in the original text.
@@ -335,7 +370,7 @@ def summarize_dosing(q_item: Dict[str, Any]) -> str:
     """
 
     # Initialize OpenAI client
-    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    client = AsyncOpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
     content = q_item['label']['dosageAndAdministration']
     content += q_item['label']['dosageFormsAndStrengths']
@@ -352,7 +387,7 @@ Output Formatting Rules:
 - Return **only raw HTML** using the following allowed tags: `<p>`, `<ul>`, and `<li>`.
 - Do **not** wrap the output in triple backticks or any code block annotations.
 - Do **not** include explanatory text outside of the HTML.
-- Use `<h3>` to introduce labeled sections (e.g., “Adult Dosing”, “Renal Impairment”).
+- Use `<h3>` to introduce labeled sections (e.g., "Adult Dosing", "Renal Impairment").
 - Use `<ul>` and `<li>` for listing specific dose instructions, regimens, or population-specific details.
 
 Additional Restrictions:
@@ -370,26 +405,33 @@ Clinical Guidelines:
   - Initial and maintenance doses
   - Frequency, route, and duration
   - Dose adjustments for renal/hepatic impairment or other conditions
-- Preserve exact values (e.g., “200 mg once daily”) and qualifiers (e.g., “administer with food”).
+- Preserve exact values (e.g., "200 mg once daily") and qualifiers (e.g., "administer with food").
 - Exclude unrelated information (e.g., indications, side effects) unless directly tied to dosing.
 
 ## BEGIN Drug Data:
-${content}
+{content}
 ## END Drug Data
 
 """
 
     try:
         print(f'Summarizing Uses and Conditions {q_item["drugName"]}...')
-        # Use GPT-4 for the best summarization quality
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                ChatCompletionSystemMessageParam(role="system", content=prompt),
-            ],
-            temperature=0.1,  # Low temperature for more deterministic output
-            max_tokens=700,
-        )
+        
+        # Get rate limiter for the model
+        model = "gpt-4o"
+        rate_limiter = get_rate_limiter(model)
+        
+        # Use rate limiter before making the API call
+        async with rate_limiter:
+            # Use GPT-4 for the best summarization quality
+            response = await client.chat.completions.create(
+                model=model,
+                messages=[
+                    ChatCompletionSystemMessageParam(role="system", content=prompt),
+                ],
+                temperature=0.1,  # Low temperature for more deterministic output
+                max_tokens=700,
+            )
 
         print(f'Summarized Uses and Conditions {q_item["drugName"]}...')
 

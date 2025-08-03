@@ -1,8 +1,10 @@
 import openai
 import os
+import asyncio
 from typing import Optional
 from openai.types.chat import ChatCompletionUserMessageParam
 from bs4 import BeautifulSoup
+from rate_limiter import get_rate_limiter
 
 prompt = """
 You are an expert in clinical data presentation. Your task is to process raw HTML drug labeling content and convert it into clear, fully detailed, human-readable output suitable for healthcare providers.
@@ -21,14 +23,14 @@ Your instructions are:
 2. **Convert Tables to Text with Clear Labels**  
    For every table:
    - Spell out its contents as paragraph text or as a list.
-   - Explicitly state row and column relationships (e.g., “Route of Administration: Oral” or “Adverse Reaction – Frequency: Headache – 12%”).
+   - Explicitly state row and column relationships (e.g., "Route of Administration: Oral" or "Adverse Reaction – Frequency: Headache – 12%").
    - Maintain the structure and order of data as presented in the table.
 
 3. **Clarify Implicit Structure**  
-   Use full sentences when necessary to clarify conditional statements or lists. However, do not reword clinical terms or dilute the document’s regulatory tone.
+   Use full sentences when necessary to clarify conditional statements or lists. However, do not reword clinical terms or dilute the document's regulatory tone.
 
 4. **Maintain Document Structure and Headings**  
-   Preserve all section titles and their order (e.g., “5 WARNINGS AND PRECAUTIONS”). Reflect the document’s original layout in your response.
+   Preserve all section titles and their order (e.g., "5 WARNINGS AND PRECAUTIONS"). Reflect the document's original layout in your response.
 
 5. **Restrict Output to Specific HTML Tags**  
    You must only use the following HTML tags in your output:  
@@ -61,7 +63,7 @@ Your instructions are:
     Your response must be a one-to-one representation of the input, expressed in the permitted output format. Treat all input as authoritative. Do not incorporate external knowledge or training data.
 
 14. **Avoid Generalization Phrases**  
-    Do not use phrases such as “may include,” “commonly known as,” “often used for,” “typically,” or any other language that introduces generalized or external context.
+    Do not use phrases such as "may include," "commonly known as," "often used for," "typically," or any other language that introduces generalized or external context.
 
 15. **No External Language Model Knowledge**  
     This is a strict transformation task. You are prohibited from referencing or applying prior knowledge from training. Only operate on the provided HTML input.
@@ -74,7 +76,7 @@ Here is the HTML content to process:
 
 """
 
-def enhance_content(text: str) -> str:
+async def enhance_content(text: str) -> str:
     """
     Enhances content using GPT-4o with the predefined clinical data presentation prompt.
     
@@ -92,7 +94,7 @@ def enhance_content(text: str) -> str:
     # Get API key from parameter or environment variable
     api_key = os.getenv('OPENAI_API_KEY')
     # Initialize OpenAI client
-    client = openai.OpenAI(api_key=api_key)
+    client = openai.AsyncOpenAI(api_key=api_key)
 
     # Remove all header tags and their content using BeautifulSoup
 
@@ -102,15 +104,21 @@ def enhance_content(text: str) -> str:
 
         print('Enhancing Content...')
 
-        # Call GPT-4o
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                ChatCompletionUserMessageParam(role="user", content=full_prompt)
-            ],
-            temperature=0.1,  # Low temperature for consistent, structured output
-            max_tokens=4000   # Adjust based on your needs
-        )
+        # Get rate limiter for the model
+        model = "gpt-4o"
+        rate_limiter = get_rate_limiter(model)
+        
+        # Use rate limiter before making the API call
+        async with rate_limiter:
+            # Call GPT-4o
+            response = await client.chat.completions.create(
+                model=model,
+                messages=[
+                    ChatCompletionUserMessageParam(role="user", content=full_prompt)
+                ],
+                temperature=0.1,  # Low temperature for consistent, structured output
+                max_tokens=4000   # Adjust based on your needs
+            )
 
         print('Content enhanced')
 
