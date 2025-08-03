@@ -70,7 +70,7 @@ def find_similar_drugs_by_name(
     # Step 4: Aggregate similar drug names, excluding the original
     similar_metadatas = results["metadatas"][0]
     similar_names = [
-        m["name"]
+        m["slug"]
         for m in similar_metadatas
         if m.get("name") and m["name"] != drug_name
     ]

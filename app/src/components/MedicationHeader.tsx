@@ -1,23 +1,29 @@
 "use client"
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import SearchBar from './SearchBar';
 
 interface MedicationHeaderProps {
     title?: string;
     onSearch?: (query: string) => void;
+    searchQuery?: string;
 }
 
 const MedicationHeader: React.FC<MedicationHeaderProps> = ({ 
     title = "Medication Search",
-    onSearch 
+    onSearch,
+    searchQuery = ""
 }) => {
+    const router = useRouter();
+
     const handleSearch = (query: string) => {
         if (onSearch) {
             onSearch(query);
         }
-        // TODO: Implement search functionality
-        console.log('Search query:', query);
+        
+        // Redirect to home page with search query as URL parameter
+        router.push(`/?q=${encodeURIComponent(query)}`);
     };
 
     return (
@@ -29,7 +35,7 @@ const MedicationHeader: React.FC<MedicationHeaderProps> = ({
                 {title}
             </div>
             <div className="flex items-center">
-                <SearchBar onSearch={handleSearch} />
+                <SearchBar onSearch={handleSearch} initialValue={searchQuery} />
             </div>
         </div>
     );

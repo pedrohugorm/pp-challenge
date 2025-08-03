@@ -53,4 +53,26 @@ export async function fetchMedicationBySlug(slug: string): Promise<Medication> {
         console.error('Error fetching medication by slug:', error);
         throw error;
     }
+}
+
+export async function searchMedications(query: string): Promise<MedicationResponse> {
+    try {
+        const response = await fetch(`${getBackendUrl()}/medications/search`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error searching medications:', error);
+        // Return an empty array on error to prevent an app crash
+        return { medications: [] };
+    }
 } 
