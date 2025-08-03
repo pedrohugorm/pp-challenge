@@ -9,7 +9,7 @@ from scripts.clean_json_html import clean_json_html
 from scripts.enhance_content import enhance_content
 from scripts.structure_json_html import structure_json_html
 from scripts.prepare_item_for_qdrant import prepare_item_for_qdrant
-from scripts.summarize_description import summarize_description, summarize_use_and_conditions, summarize_contra_indications_warnings, summarize_dosing
+from scripts.summarize_description import summarize_description, summarize_use_and_conditions, summarize_contra_indications, summarize_dosing, summarize_warnings
 from scripts.upsert_to_chromadb import upsert_q_items_to_chromadb
 from scripts.upsert_items_to_postgres import upsert_items_to_postgres
 from scripts.fix_html_syntax import fix_html_syntax
@@ -32,7 +32,7 @@ async def main():
     with open("./data/Labels.json", "r", encoding="utf-8") as f:
         json_array = json.load(f)
         for item in json_array:
-            if item['drugName'] not in 'Trulicity Demo Pen':
+            if item['drugName'] not in 'Emgality':
                 continue
             item = clean_json_html(item)
             item = fix_html_syntax(item)
@@ -56,9 +56,13 @@ async def main():
             q_item['useAndConditions'] = use_and_conditions
             item['label']['useAndConditions'] = use_and_conditions
 
-            contra_indications_warnings = summarize_contra_indications_warnings(q_item)
-            q_item['contraIndicationWarnings'] = contra_indications_warnings
-            item['label']['contraIndicationWarnings'] = contra_indications_warnings
+            contra_indications_warnings = summarize_contra_indications(q_item)
+            q_item['contraIndications'] = contra_indications_warnings
+            item['label']['contraIndications'] = contra_indications_warnings
+
+            warnings = summarize_warnings(q_item)
+            q_item['warnings'] = warnings
+            item['label']['warnings'] = warnings
 
             dosing = summarize_dosing(q_item)
             q_item['dosing'] = dosing

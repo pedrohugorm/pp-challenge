@@ -93,10 +93,12 @@ export default async function MedicationPage({ params }: MedicationPageProps) {
                                 <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['description'] as string) }}></div>
                                 <h2>Use and Conditions</h2>
                                 <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['useAndConditions'] as string) }}></div>
-                                <h2>Contraindications and Warnings</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['contraIndicationWarnings'] as string) }}></div>
-                                <h2>Dosing and administration</h2>
+                                <h2>Dosing and Administration</h2>
                                 <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['dosing'] as string) }}></div>
+                                <h2>Contraindications and Warnings</h2>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['contraIndications'] as string) }}></div>
+                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['warnings'] as string) }}></div>
+
                                 {/*<hr />*/}
                                 {/*<h2>1. Indications and Usage</h2>*/}
                                 {/*<div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.blocks_json['indicationsAndUsage'] as string) }}></div>*/}

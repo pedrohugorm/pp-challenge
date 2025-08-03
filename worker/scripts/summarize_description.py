@@ -42,15 +42,30 @@ def summarize_description(q_item: Dict[str, Any]) -> str:
 
     # Create a prompt that emphasizes summarization without hallucination
     prompt = f"""
-Please summarize the following content accurately and concisely. 
-IMPORTANT: Only include information that is explicitly stated in the original text. 
-Do not add any facts, details, or information that is not present in the source material.
-Do not make assumptions or inferences beyond what is directly stated.
-The summary must have a max of 60 characters.
+Please summarize the following content accurately and concisely.
+
+IMPORTANT:
+- Only include information explicitly stated in the original text.
+- Do NOT add any facts, details, or information not present in the source material.
+- Do NOT infer, interpret, or reword content beyond what is directly stated.
+- The summary must be a maximum of 160 characters.
+
+Output Formatting Rules:
+- Return only raw HTML using the allowed tags: <p>, <ul>, and <li>.
+- Do not wrap the output in triple backticks or any code block annotations.
+- Do not include any explanatory text outside of the HTML.
+- Use <p> if needed to wrap the entire summary. Do not use any other tags.
+
+Strict Limitations:
+- You must not use any HTML tags besides <p>, <ul>, and <li>. Prohibited tags include <b>, <strong>, <em>, <span>, <div>, <h1>–<h6>, <br>, <sup>, <sub>, <table>, and others.
+- Do not use HTML entities (e.g., &nbsp;, &copy;). Use plain characters only.
+- Do not nest <p> tags inside <li> elements. Each <li> must contain plain text only.
+- Do not include tag attributes, classes, or styles.
 
 ## Original content:
 {description_content}
-### END OF Original content"""
+### END OF Original content
+"""
 
     try:
         print(f'Summarizing {q_item["drugName"]}...')
@@ -63,7 +78,6 @@ The summary must have a max of 60 characters.
             ],
             temperature=0.1,  # Low temperature for more deterministic output
             max_tokens=500,  # Reasonable limit for summaries
-            top_p=0.9
         )
 
         print(f'Summarized {q_item["drugName"]}...')
@@ -107,8 +121,16 @@ Output Formatting Rules:
 - Return **only raw HTML** using these allowed tags: `<p>`, `<ul>`, and `<li>`.
 - Do **not** wrap the output in triple backticks (```) or any language annotations like `html`.
 - Do **not** include any extraneous text before or after the HTML (e.g., explanations, labels, or markdown).
-- Wrap section headings (e.g., “Approved Indications”) in `<p>` tags.
+- Wrap section headings (e.g., “Approved Indications”) in `<h3>` tags.
 - Use `<ul>` and `<li>` for lists of specific indications or conditions.
+
+Additional Restrictions:
+- You must not use any HTML tags other than <p>, <ul>, and <li>. Prohibited tags include (but are not limited to): <b>, <strong>, <em>, <i>, <u>, <span>, <div>, <h1>–<h6>, <br>, <sup>, <sub>, <table>, <ol>, <blockquote>, <code>, and <style>.
+- Do not use any inline CSS, tag attributes, or class names.
+- Do not include HTML entities such as &nbsp;, &lt;, &gt;, &amp;, &copy;, etc. Use plain text characters only.
+- If emphasis, sectioning, or formatting is necessary, convey it using plain language and the allowed tags only.
+- Do not place <p> tags inside <li> elements. Each <li> must contain plain text only—no nested <p> tags.
+- Any output containing disallowed tags, attributes, or entities will be treated as invalid.
 
 Clinical Guidelines:
 - Use only the information contained in the provided data. Do **not** rely on external sources or medical knowledge.
@@ -135,7 +157,6 @@ ${content}
             ],
             temperature=0.1,  # Low temperature for more deterministic output
             max_tokens=500,
-            top_p=0.9
         )
 
         print(f'Summarized Uses and Conditions {q_item["drugName"]}...')
@@ -149,7 +170,7 @@ ${content}
         return f"Error in summarization: {str(e)}"
 
 
-def summarize_contra_indications_warnings(q_item: Dict[str, Any]) -> str:
+def summarize_contra_indications(q_item: Dict[str, Any]) -> str:
     """
     Summarizes the description content from a q_item dictionary using GPT-4
     without hallucinating or adding information not present in the original text.
@@ -165,7 +186,7 @@ def summarize_contra_indications_warnings(q_item: Dict[str, Any]) -> str:
     client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
     content = q_item['label']['contraindications']
-    content += q_item['label']['warningsAndPrecautions']
+    # content += q_item['label']['warningsAndPrecautions']
 
     # If no label.description found, return empty string
     if not content:
@@ -173,22 +194,29 @@ def summarize_contra_indications_warnings(q_item: Dict[str, Any]) -> str:
 
     # Create a prompt that emphasizes summarization without hallucination
     prompt = f"""
-You are a clinical documentation specialist. Your task is to extract and summarize the **contraindications** and **warnings or precautions** associated with the drug, based solely on the content provided below.
+You are a clinical documentation specialist. Your task is to extract and summarize the **contraindications** associated with the drug, based solely on the content provided below.
 
 Output Formatting Rules:
 - Return **only raw HTML** using the following allowed tags: `<p>`, `<ul>`, and `<li>`.
 - Do **not** include triple backticks (```) or any code block annotations (e.g., `html`).
 - Do **not** include any explanatory or extra text outside of the HTML itself.
-- Use `<p>` for section labels (e.g., “Contraindications” and “Warnings and Precautions”).
+- Use `<h3>` for section labels (e.g., “Contraindications” and “Warnings and Precautions”).
 - Use `<ul>` and `<li>` for listing individual contraindications or warnings.
+
+Additional Restrictions:
+- You must not use any HTML tags other than <p>, <ul>, and <li>. Prohibited tags include (but are not limited to): <b>, <strong>, <em>, <i>, <u>, <span>, <div>, <h1>–<h6>, <br>, <sup>, <sub>, <table>, <ol>, <blockquote>, <code>, and <style>.
+- Do not use any inline CSS, tag attributes, or class names.
+- Do not include HTML entities such as &nbsp;, &lt;, &gt;, &amp;, &copy;, etc. Use plain text characters only.
+- If emphasis, sectioning, or formatting is necessary, convey it using plain language and the allowed tags only.
+- Do not place <p> tags inside <li> elements. Each <li> must contain plain text only—no nested <p> tags.
+- Any output containing disallowed tags, attributes, or entities will be treated as invalid.
 
 Clinical Guidelines:
 - Extract only what is explicitly mentioned in the input. Do **not** infer or add information not clearly stated.
 - Separate the following clearly:
   - **Contraindications** (i.e., conditions or factors where use of the drug is prohibited)
-  - **Warnings and Precautions** (i.e., safety considerations, boxed warnings, monitoring needs, risk factors)
 - Preserve any severity or condition-specific language (e.g., “Severe hepatic impairment,” “Risk of QT prolongation”).
-- Exclude unrelated data (e.g., dosage or efficacy) unless it is directly tied to the warning or contraindication.
+- Exclude unrelated data (e.g., dosage or efficacy) unless it is directly tied to the contraindication.
 - Do **not** use any external sources or general medical knowledge.
 
 ## BEGIN Drug Data:
@@ -206,7 +234,81 @@ ${content}
             ],
             temperature=0.1,  # Low temperature for more deterministic output
             max_tokens=500,
-            top_p=0.9
+        )
+
+        print(f'Summarized Uses and Conditions {q_item["drugName"]}...')
+
+        summary = response.choices[0].message.content.strip()
+        return summary
+
+    except Exception as e:
+        print(f"Error during summarization: {e}")
+        # Return a fallback summary or the original content
+        return f"Error in summarization: {str(e)}"
+
+def summarize_warnings(q_item: Dict[str, Any]) -> str:
+    """
+    Summarizes the description content from a q_item dictionary using GPT-4
+    without hallucinating or adding information not present in the original text.
+
+    Args:
+        q_item: A dictionary containing item data with description content
+
+    Returns:
+        A summarized version of the description content
+    """
+
+    # Initialize OpenAI client
+    client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+    content = q_item['label']['warningsAndPrecautions']
+
+    # If no label.description found, return empty string
+    if not content:
+        return ""
+
+    # Create a prompt that emphasizes summarization without hallucination
+    prompt = f"""
+You are a clinical documentation specialist. Your task is to extract and summarize the **warnings or precautions** associated with the drug, based solely on the content provided below.
+
+Output Formatting Rules:
+- Return **only raw HTML** using the following allowed tags: `<p>`, `<ul>`, and `<li>`.
+- Do **not** include triple backticks (```) or any code block annotations (e.g., `html`).
+- Do **not** include any explanatory or extra text outside of the HTML itself.
+- Use `<h3>` for section labels (e.g., “Contraindications” and “Warnings and Precautions”).
+- Use `<ul>` and `<li>` for listing individual contraindications or warnings.
+
+Additional Restrictions:
+- You must not use any HTML tags other than <p>, <ul>, and <li>. Prohibited tags include (but are not limited to): <b>, <strong>, <em>, <i>, <u>, <span>, <div>, <h1>–<h6>, <br>, <sup>, <sub>, <table>, <ol>, <blockquote>, <code>, and <style>.
+- Do not use any inline CSS, tag attributes, or class names.
+- Do not include HTML entities such as &nbsp;, &lt;, &gt;, &amp;, &copy;, etc. Use plain text characters only.
+- If emphasis, sectioning, or formatting is necessary, convey it using plain language and the allowed tags only.
+- Do not place <p> tags inside <li> elements. Each <li> must contain plain text only—no nested <p> tags.
+- Any output containing disallowed tags, attributes, or entities will be treated as invalid.
+
+Clinical Guidelines:
+- Extract only what is explicitly mentioned in the input. Do **not** infer or add information not clearly stated.
+- Separate the following clearly:
+  - **Warnings and Precautions** (i.e., safety considerations, boxed warnings, monitoring needs, risk factors)
+- Preserve any severity or condition-specific language (e.g., “Severe hepatic impairment,” “Risk of QT prolongation”).
+- Exclude unrelated data (e.g., dosage or efficacy) unless it is directly tied to the warning.
+- Do **not** use any external sources or general medical knowledge.
+
+## BEGIN Drug Data:
+${content}
+## END Drug Data
+"""
+
+    try:
+        print(f'Summarizing Uses and Conditions {q_item["drugName"]}...')
+        # Use GPT-4 for the best summarization quality
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                ChatCompletionSystemMessageParam(role="system", content=prompt),
+            ],
+            temperature=0.1,  # Low temperature for more deterministic output
+            max_tokens=500,
         )
 
         print(f'Summarized Uses and Conditions {q_item["drugName"]}...')
@@ -250,8 +352,16 @@ Output Formatting Rules:
 - Return **only raw HTML** using the following allowed tags: `<p>`, `<ul>`, and `<li>`.
 - Do **not** wrap the output in triple backticks or any code block annotations.
 - Do **not** include explanatory text outside of the HTML.
-- Use `<p>` to introduce labeled sections (e.g., “Adult Dosing”, “Renal Impairment”).
+- Use `<h3>` to introduce labeled sections (e.g., “Adult Dosing”, “Renal Impairment”).
 - Use `<ul>` and `<li>` for listing specific dose instructions, regimens, or population-specific details.
+
+Additional Restrictions:
+- You must not use any HTML tags other than <p>, <ul>, and <li>. Prohibited tags include (but are not limited to): <b>, <strong>, <em>, <i>, <u>, <span>, <div>, <h1>–<h6>, <br>, <sup>, <sub>, <table>, <ol>, <blockquote>, <code>, and <style>.
+- Do not use any inline CSS, tag attributes, or class names.
+- Do not include HTML entities such as &nbsp;, &lt;, &gt;, &amp;, &copy;, etc. Use plain text characters only.
+- If emphasis, sectioning, or formatting is necessary, convey it using plain language and the allowed tags only.
+- Do not place <p> tags inside <li> elements. Each <li> must contain plain text only—no nested <p> tags.
+- Any output containing disallowed tags, attributes, or entities will be treated as invalid.
 
 Clinical Guidelines:
 - Use **only** the content provided. Do **not** refer to external sources or general drug knowledge.
@@ -278,8 +388,7 @@ ${content}
                 ChatCompletionSystemMessageParam(role="system", content=prompt),
             ],
             temperature=0.1,  # Low temperature for more deterministic output
-            max_tokens=500,
-            top_p=0.9
+            max_tokens=700,
         )
 
         print(f'Summarized Uses and Conditions {q_item["drugName"]}...')
