@@ -1,7 +1,7 @@
 import os
 import sys
 import asyncio
-from openai.types.chat import ChatCompletionMessageParam
+# Removed import of ChatCompletionMessageParam
 from typing import Dict, Any, List
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
@@ -91,7 +91,7 @@ Now extract the conditions from the following input:
             response = await client.chat.completions.parse(
                 model=model,
                 messages=[
-                    ChatCompletionMessageParam(role="system", content=prompt),
+                    {"role": "system", "content": prompt},
                 ],
                 temperature=0,  # Low temperature for more deterministic output
                 max_tokens=500,

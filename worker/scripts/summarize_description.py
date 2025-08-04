@@ -4,7 +4,7 @@ import asyncio
 from typing import Dict, Any
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
-from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
+# Removed import of ChatCompletionSystemMessageParam and ChatCompletionUserMessageParam
 from rate_limiter import get_rate_limiter
 
 # Load environment variables from .env file in the parent directory (project root)
@@ -83,8 +83,8 @@ Strict Limitations:
             response = await client.chat.completions.create(
                 model=model,
                 messages=[
-                    ChatCompletionSystemMessageParam(role="system", content="You are a precise summarization assistant. Your task is to create accurate, concise summaries that contain only information explicitly stated in the source text. Never add facts, details, or information that is not present in the original content. Focus on extracting and condensing the key information while maintaining factual accuracy."),
-                    ChatCompletionUserMessageParam(role="user", content=prompt)
+                    {"role": "system", "content": "You are a precise summarization assistant. Your task is to create accurate, concise summaries that contain only information explicitly stated in the source text. Never add facts, details, or information that is not present in the original content. Focus on extracting and condensing the key information while maintaining factual accuracy."},
+                    {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,  # Low temperature for more deterministic output
                 max_tokens=500,  # Reasonable limit for summaries
@@ -168,8 +168,8 @@ Strict Limitations:
             response = await client.chat.completions.create(
                 model=model,
                 messages=[
-                    ChatCompletionSystemMessageParam(role="system", content="You are a precise summarization assistant. Your task is to create accurate, concise summaries that contain only information explicitly stated in the source text. Never add facts, details, or information that is not present in the original content. Focus on extracting and condensing the key information while maintaining factual accuracy."),
-                    ChatCompletionUserMessageParam(role="user", content=prompt)
+                    {"role": "system", "content": "You are a precise summarization assistant. Your task is to create accurate, concise summaries that contain only information explicitly stated in the source text. Never add facts, details, or information that is not present in the original content. Focus on extracting and condensing the key information while maintaining factual accuracy."},
+                    {"role": "user", "content": prompt}
                 ],
                 temperature=0.1,  # Low temperature for more deterministic output
                 max_tokens=500,  # Reasonable limit for summaries
@@ -256,7 +256,7 @@ Clinical Guidelines:
             response = await client.chat.completions.create(
                 model=model,
                 messages=[
-                    ChatCompletionSystemMessageParam(role="system", content=prompt),
+                    {"role": "system", "content": prompt},
                 ],
                 temperature=0.1,  # Low temperature for more deterministic output
                 max_tokens=500,
@@ -346,7 +346,7 @@ Clinical Guidelines:
             response = await client.chat.completions.create(
                 model=model,
                 messages=[
-                    ChatCompletionSystemMessageParam(role="system", content=prompt),
+                    {"role": "system", "content": prompt},
                 ],
                 temperature=0.1,  # Low temperature for more deterministic output
                 max_tokens=500,
@@ -429,7 +429,7 @@ Clinical Guidelines:
             response = await client.chat.completions.create(
                 model=model,
                 messages=[
-                    ChatCompletionSystemMessageParam(role="system", content=prompt),
+                    {"role": "system", "content": prompt},
                 ],
                 temperature=0.1,  # Low temperature for more deterministic output
                 max_tokens=500,
@@ -517,7 +517,7 @@ Clinical Guidelines:
             response = await client.chat.completions.create(
                 model=model,
                 messages=[
-                    ChatCompletionSystemMessageParam(role="system", content=prompt),
+                    {"role": "system", "content": prompt},
                 ],
                 temperature=0.1,  # Low temperature for more deterministic output
                 max_tokens=700,

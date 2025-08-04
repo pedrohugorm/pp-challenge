@@ -2,7 +2,7 @@ import openai
 import os
 import asyncio
 from typing import Optional
-from openai.types.chat import ChatCompletionUserMessageParam
+# Removed import of ChatCompletionUserMessageParam
 from bs4 import BeautifulSoup
 from rate_limiter import get_rate_limiter
 
@@ -114,7 +114,7 @@ async def enhance_content(text: str) -> str:
             response = await client.chat.completions.create(
                 model=model,
                 messages=[
-                    ChatCompletionUserMessageParam(role="user", content=full_prompt)
+                    {"role": "user", "content": full_prompt}
                 ],
                 temperature=0.1,  # Low temperature for consistent, structured output
                 max_tokens=4000   # Adjust based on your needs
