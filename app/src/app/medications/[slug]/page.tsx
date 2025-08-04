@@ -4,8 +4,8 @@ import {notFound} from 'next/navigation';
 import MedicationHeader from '@/components/MedicationHeader';
 import MedicationAssistant from '@/components/MedicationAssistant';
 import SimilarMedicationsList from "@/components/SimilarMedicationsList";
-import {RenderBlocks, renderBlocks} from "@/utils/renderBlocks";
-import { Metadata } from 'next';
+import {RenderBlocks} from "@/utils/renderBlocks";
+import {Metadata} from 'next';
 
 interface MedicationPageProps {
     params: Promise<{
@@ -28,7 +28,7 @@ async function getMedicationData(slug: string) {
 }
 
 // Generate metadata for the page
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({params}: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const resolvedParams = await params;
     const medication = await getMedicationData(resolvedParams.slug);
 
@@ -127,13 +127,14 @@ export default async function MedicationPage({params}: MedicationPageProps) {
 
                                 <h2>Description</h2>
                                 <div className="medication-section">
-                                    <RenderBlocks blocks={medication.meta_description_blocks} headerOffset={0} />
+                                    <RenderBlocks blocks={medication.meta_description_blocks} headerOffset={0}/>
                                 </div>
                                 {medication.use_and_conditions_blocks && medication.use_and_conditions_blocks.length > 0 && (
                                     <>
                                         <h2>Use and Conditions</h2>
                                         <div className="medication-section">
-                                            <RenderBlocks blocks={medication.use_and_conditions_blocks} headerOffset={0} />
+                                            <RenderBlocks blocks={medication.use_and_conditions_blocks}
+                                                          headerOffset={0}/>
                                         </div>
                                     </>
                                 )}
@@ -141,7 +142,7 @@ export default async function MedicationPage({params}: MedicationPageProps) {
                                     <>
                                         <h2>Dosing and Administration</h2>
                                         <div className="medication-section">
-                                            <RenderBlocks blocks={medication.dosing_blocks} headerOffset={0} />
+                                            <RenderBlocks blocks={medication.dosing_blocks} headerOffset={0}/>
                                         </div>
                                     </>
                                 )}
@@ -149,7 +150,8 @@ export default async function MedicationPage({params}: MedicationPageProps) {
                                     <>
                                         <h2>Contraindications</h2>
                                         <div className="medication-section">
-                                            <RenderBlocks blocks={medication.contra_indications_blocks} headerOffset={0} />
+                                            <RenderBlocks blocks={medication.contra_indications_blocks}
+                                                          headerOffset={0}/>
                                         </div>
                                     </>
                                 )}
@@ -157,7 +159,7 @@ export default async function MedicationPage({params}: MedicationPageProps) {
                                     <>
                                         <h2>Warnings</h2>
                                         <div className="medication-section">
-                                            <RenderBlocks blocks={medication.warning_blocks} headerOffset={0} />
+                                            <RenderBlocks blocks={medication.warning_blocks} headerOffset={0}/>
                                         </div>
                                     </>
                                 )}
