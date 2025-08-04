@@ -80,6 +80,37 @@ The application leverages AI-powered RAG systems to enhance medication data proc
 - **Semantic Search**: AI-processed content enables semantic search across medication databases
 - **Contextual Retrieval**: RAG system provides contextually relevant medication information
 
+## Data Pipeline
+
+The data pipeline processes and enriches medication data through a series of AI-powered transformations:
+
+```mermaid
+graph TB
+    A[Labels.json] --> B[GPT-4o Content Enhancement]
+    B --> C[Create Embeddings for ChromaDB]
+    C --> D[Summarize Data]
+    D --> E[Generate Structured View Blocks]
+    E --> F[Generate Chunks using Spacy]
+    F --> G[Upsert to ChromaDB]
+    F --> H[Upsert to PostgreSQL]
+```
+
+### Pipeline Flow
+
+1. **Initial Processing**: Raw medication data from `Labels.json` is loaded and prepared for processing
+2. **Content Enhancement**: GPT-4o enriches and improves medication descriptions, metadata, and contextual information
+3. **Embedding Generation**: Enhanced content is converted into vector embeddings optimized for ChromaDB storage
+4. **Data Summarization**: Complex medication information is intelligently summarized for better user comprehension
+5. **Block Structure Creation**: Content is organized into structured view blocks for secure frontend rendering
+6. **Chunking with Spacy**: Natural language processing using Spacy library creates semantic chunks for improved search capabilities
+7. **Database Storage**: Processed data is simultaneously upserted to both ChromaDB (for vector search) and PostgreSQL (for structured queries)
+
+### Key Features
+- **AI-Powered Enhancement**: GPT-4o ensures high-quality content enrichment
+- **Dual Database Storage**: Optimized storage for both vector similarity search and traditional relational queries
+- **Security-First**: Structured blocks prevent XSS while maintaining rich content presentation
+- **Scalable Processing**: Pipeline handles large datasets efficiently with proper chunking and summarization
+
 ## Setup Instructions
 
 ### Install Spacy en_core_web_sm
