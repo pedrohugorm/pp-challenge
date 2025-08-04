@@ -111,34 +111,56 @@ export default async function MedicationPage({params}: MedicationPageProps) {
                             </div>
 
                             <div className="main-content">
-                                <h1>{medication.name}</h1>
-                                <p>Labeler: {medication.labeler.name}</p>
-                                <p>Generic name: {medication.generic_name}</p>
-                                <p>Product type: {medication.product_type}</p>
-                                <p>Effective date: {new Date(medication.effective_time).toLocaleDateString()}</p>
-
-                                <div className="medication-section">{medication.labeler.name}</div>
+                                <h1>{medication.name} ({medication.generic_name})</h1>
+                                {medication.labeler?.name && (
+                                    <p>Labeler: {medication.labeler.name}</p>
+                                )}
+                                {medication.generic_name && (
+                                    <p>Generic name: {medication.generic_name}</p>
+                                )}
+                                {medication.product_type && (
+                                    <p>Product type: {medication.product_type}</p>
+                                )}
+                                {medication.effective_time && (
+                                    <p>Effective date: {new Date(medication.effective_time).toLocaleDateString()}</p>
+                                )}
 
                                 <h2>Description</h2>
                                 <div className="medication-section">
                                     <RenderBlocks blocks={medication.meta_description_blocks} headerOffset={0} />
                                 </div>
-                                <h2>Use and Conditions</h2>
-                                <div className="medication-section">
-                                    <RenderBlocks blocks={medication.use_and_conditions_blocks} headerOffset={0} />
-                                </div>
-                                <h2>Dosing and Administration</h2>
-                                <div className="medication-section">
-                                    <RenderBlocks blocks={medication.dosing_blocks} headerOffset={0} />
-                                </div>
-                                <h2>Contraindications</h2>
-                                <div className="medication-section">
-                                    <RenderBlocks blocks={medication.contra_indications_blocks} headerOffset={0} />
-                                </div>
-                                <h2>Warnings</h2>
-                                <div className="medication-section">
-                                    <RenderBlocks blocks={medication.warning_blocks} headerOffset={0} />
-                                </div>
+                                {medication.use_and_conditions_blocks && medication.use_and_conditions_blocks.length > 0 && (
+                                    <>
+                                        <h2>Use and Conditions</h2>
+                                        <div className="medication-section">
+                                            <RenderBlocks blocks={medication.use_and_conditions_blocks} headerOffset={0} />
+                                        </div>
+                                    </>
+                                )}
+                                {medication.dosing_blocks && medication.dosing_blocks.length > 0 && (
+                                    <>
+                                        <h2>Dosing and Administration</h2>
+                                        <div className="medication-section">
+                                            <RenderBlocks blocks={medication.dosing_blocks} headerOffset={0} />
+                                        </div>
+                                    </>
+                                )}
+                                {medication.contra_indications_blocks && medication.contra_indications_blocks.length > 0 && (
+                                    <>
+                                        <h2>Contraindications</h2>
+                                        <div className="medication-section">
+                                            <RenderBlocks blocks={medication.contra_indications_blocks} headerOffset={0} />
+                                        </div>
+                                    </>
+                                )}
+                                {medication.warning_blocks && medication.warning_blocks.length > 0 && (
+                                    <>
+                                        <h2>Warnings</h2>
+                                        <div className="medication-section">
+                                            <RenderBlocks blocks={medication.warning_blocks} headerOffset={0} />
+                                        </div>
+                                    </>
+                                )}
 
                                 <SimilarMedicationsList
                                     medicationSlugs={Object.keys(medication.vector_similar_ranking ?? {})}/>
