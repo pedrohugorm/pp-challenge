@@ -1,14 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
 import {type Medication} from '@/services/medicationService';
-import DOMPurify from "dompurify";
+import {renderBlocks} from "@/utils/renderBlocks";
 
 interface MedicationCardProps {
     medication: Medication;
-}
-
-const cleanHtml = (html: string) => {
-    return DOMPurify(window).sanitize(html);
 }
 
 export default function MedicationCard({medication}: MedicationCardProps) {
@@ -22,8 +18,7 @@ export default function MedicationCard({medication}: MedicationCardProps) {
                 <div className="space-y-1 lg:space-y-2 text-sm text-gray-600">
                     <p>Labeler: {medication.labeler.name}</p>
                 </div>
-                <div className="space-y-1 lg:space-y-2 text-sm text-gray-600 flex-grow"
-                     dangerouslySetInnerHTML={{__html: cleanHtml(medication.meta_description)}}></div>
+                <div className="space-y-1 lg:space-y-2 text-sm text-gray-600 flex-grow">{renderBlocks(medication.meta_description_blocks, 0)}</div>
             </div>
         </Link>
     );

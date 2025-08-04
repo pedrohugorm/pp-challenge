@@ -173,7 +173,7 @@ const EmbedMedication = ({contents}: { contents: (string | BlockContent | EmbedM
 
 // Document component
 const Document = ({children}: { children: React.ReactNode }) => {
-    return <div className="medication-section">{children}</div>;
+    return <div>{children}</div>;
 };
 
 // Component map

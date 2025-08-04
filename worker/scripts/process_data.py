@@ -85,9 +85,21 @@ async def process_single_item(item):
     q_item['dosing'] = dosing
     item['label']['dosing'] = dosing
 
+    # Create view_blocks as a simple dictionary like q_item
+    view_blocks = {
+        'metaDescription': summary,
+        'description': description,
+        'useAndConditions': use_and_conditions,
+        'contraIndications': contra_indications_warnings,
+        'warnings': warnings,
+        'dosing': dosing
+    }
+
+    view_blocks = structure_json_html(view_blocks)
+
     print(f'Completed {item["drugName"]}.')
 
-    return item, q_item
+    return item, q_item, view_blocks
 
 
 async def main():
@@ -96,6 +108,7 @@ async def main():
     items = []
     structured_items_json_array = []
     q_items = []
+    all_view_blocks = []
 
     with open("./data/Labels.json", "r", encoding="utf-8") as f:
         json_array = json.load(f)
@@ -108,10 +121,11 @@ async def main():
         results = await asyncio.gather(*[process_single_item(item) for item in json_array])
         
         # Collect results
-        for item, q_item in results:
+        for item, q_item, view_blocks in results:
             items.append(item)
             structured_items_json_array.append(item)
             q_items.append(q_item)
+            all_view_blocks.append(view_blocks)
 
     with open("./data/items.json", "w", encoding="utf-8") as outfile:
         json.dump(items, outfile, ensure_ascii=False, indent=2)
@@ -125,7 +139,7 @@ async def main():
 
     upsert_q_items_to_chromadb(q_items)
 
-    upsert_items_to_postgres(q_items, structured_items_json_array)
+    upsert_items_to_postgres(q_items, structured_items_json_array, all_view_blocks)
 
     for q_item in q_items:
         similar_items = find_similar_drugs_by_name(q_item['drugName'])

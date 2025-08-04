@@ -7,13 +7,14 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv('../.env')
 
-def upsert_items_to_postgres(q_items, structured_items_json_array):
+def upsert_items_to_postgres(q_items, structured_items_json_array, view_blocks_array):
     """
     Upsert items to PostgreSQL database.
     
     Args:
         q_items: List of items prepared for Qdrant/vector database
         structured_items_json_array: List of structured JSON items
+        view_blocks_array: List of view_blocks for each item
     """
     # PostgreSQL connection parameters with default values
     db_params = {
@@ -54,10 +55,11 @@ def upsert_items_to_postgres(q_items, structured_items_json_array):
         
         print(f"Successfully upserted {len(unique_labelers)} unique labelers")
         
-        # Process each item using indexes to access both arrays
+        # Process each item using indexes to access all arrays
         for i in range(len(structured_items_json_array)):
             structured_item = structured_items_json_array[i]
             q_item = q_items[i]
+            view_blocks = view_blocks_array[i]
 
             print(f'Upserting {structured_item["drugName"]}...')
             
@@ -113,6 +115,14 @@ def upsert_items_to_postgres(q_items, structured_items_json_array):
             # Use structured_item for highlights and blocks_json
             highlights = json.dumps(structured_item['label'].get('highlights', '{}'))
             blocks_json = json.dumps(structured_item.get('label', {}))
+            
+            # Deconstruct view_blocks into individual fields
+            meta_description_blocks = json.dumps(view_blocks.get('metaDescription', []))
+            description_blocks = json.dumps(view_blocks.get('description', []))
+            use_and_conditions_blocks = json.dumps(view_blocks.get('useAndConditions', []))
+            contra_indications_blocks = json.dumps(view_blocks.get('contraIndications', []))
+            warning_blocks = json.dumps(view_blocks.get('warnings', []))
+            dosing_blocks = json.dumps(view_blocks.get('dosing', []))
 
             # Insert drug record
             drug_insert_query = """
@@ -123,9 +133,9 @@ def upsert_items_to_postgres(q_items, structured_items_json_array):
                     clinical_pharmacology, clinical_studies, how_supplied,
                     use_in_specific_populations, description, nonclinical_toxicology,
                     instructions_for_use, mechanism_of_action, contraindications,
-                    boxed_warning, meta_description, ai_warnings, ai_dosing, ai_use_and_conditions, ai_contraindications, ai_description, highlights, blocks_json, created_at, updated_at
+                    boxed_warning, meta_description, ai_warnings, ai_dosing, ai_use_and_conditions, ai_contraindications, ai_description, highlights, blocks_json, meta_description_blocks, description_blocks, use_and_conditions_blocks, contra_indications_blocks, warning_blocks, dosing_blocks, created_at, updated_at
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
                 ) ON CONFLICT (id) DO UPDATE SET
                     name = EXCLUDED.name,
                     generic_name = EXCLUDED.generic_name,
@@ -157,6 +167,12 @@ def upsert_items_to_postgres(q_items, structured_items_json_array):
                     ai_description = EXCLUDED.ai_description,
                     highlights = EXCLUDED.highlights,
                     blocks_json = EXCLUDED.blocks_json,
+                    meta_description_blocks = EXCLUDED.meta_description_blocks,
+                    description_blocks = EXCLUDED.description_blocks,
+                    use_and_conditions_blocks = EXCLUDED.use_and_conditions_blocks,
+                    contra_indications_blocks = EXCLUDED.contra_indications_blocks,
+                    warning_blocks = EXCLUDED.warning_blocks,
+                    dosing_blocks = EXCLUDED.dosing_blocks,
                     updated_at = NOW();
             """
 
@@ -193,7 +209,13 @@ def upsert_items_to_postgres(q_items, structured_items_json_array):
                     ai_contraindications,
                     ai_description,
                     highlights,
-                    blocks_json
+                    blocks_json,
+                    meta_description_blocks,
+                    description_blocks,
+                    use_and_conditions_blocks,
+                    contra_indications_blocks,
+                    warning_blocks,
+                    dosing_blocks
                 )
             )
 

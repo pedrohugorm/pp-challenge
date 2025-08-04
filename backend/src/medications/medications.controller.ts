@@ -44,18 +44,11 @@ export class MedicationsController {
     @Body() searchDto: SearchMedicationsDto,
   ): Promise<MedicationsResponse> {
     // Use fuzzy search if requested, otherwise use enhanced regular search
-    const result = searchDto.fuzzy
-      ? await this.medicationsService.fuzzySearchMedications(
-          searchDto.query,
-          searchDto.cursor,
-          searchDto.limit,
-          searchDto.similarityThreshold,
-        )
-      : await this.medicationsService.searchMedications(
-          searchDto.query,
-          searchDto.cursor,
-          searchDto.limit,
-        );
+    const result = await this.medicationsService.searchMedications(
+      searchDto.query,
+      searchDto.cursor,
+      searchDto.limit,
+    );
 
     return {
       medications: result.medications,

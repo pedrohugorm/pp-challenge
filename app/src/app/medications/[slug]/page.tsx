@@ -4,9 +4,8 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import MedicationHeader from '@/components/MedicationHeader';
 import MedicationAssistant from '@/components/MedicationAssistant';
-import DOMPurify from "dompurify";
-import { JSDOM } from 'jsdom';
 import SimilarMedicationsList from "@/components/SimilarMedicationsList";
+import {renderBlocks} from "@/utils/renderBlocks";
 
 interface MedicationPageProps {
     params: Promise<{
@@ -42,11 +41,6 @@ export async function generateMetadata({ params }: MedicationPageProps): Promise
         title: `${medication.name} - ${medication.labeler.name}`,
         description: medication.description,
     };
-}
-
-const cleanHtml = (html: string) => {
-    const window = new JSDOM('').window;
-    return DOMPurify(window).sanitize(html);
 }
 
 export default async function MedicationPage({ params }: MedicationPageProps) {
@@ -88,18 +82,18 @@ export default async function MedicationPage({ params }: MedicationPageProps) {
                                 <p>Product type: {medication.product_type}</p>
                                 <p>Effective date: {new Date(medication.effective_time).toLocaleDateString()}</p>
 
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.labeler.name) }}></div>
+                                <div className="medication-section">{medication.labeler.name}</div>
 
                                 <h2>Description</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.ai_description) }}></div>
+                                <div className="medication-section">{renderBlocks(medication.description_blocks, 0)}</div>
                                 <h2>Use and Conditions</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.ai_use_and_conditions) }}></div>
+                                <div className="medication-section">{renderBlocks(medication.use_and_conditions_blocks, 0)}</div>
                                 <h2>Dosing and Administration</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.ai_dosing) }}></div>
+                                <div className="medication-section">{renderBlocks(medication.dosing_blocks, 0)}</div>
                                 <h2>Contraindications</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.ai_contraindications) }}></div>
+                                <div className="medication-section">{renderBlocks(medication.contra_indications_blocks, 0)}</div>
                                 <h2>Warnings</h2>
-                                <div className="medication-section" dangerouslySetInnerHTML={{ __html: cleanHtml(medication.ai_warnings) }}></div>
+                                <div className="medication-section">{renderBlocks(medication.warning_blocks, 0)}</div>
 
                                 <SimilarMedicationsList medicationSlugs={Object.keys(medication.vector_similar_ranking ?? {})} />
                             </div>

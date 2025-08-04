@@ -1,3 +1,5 @@
+import {BlockContent} from "@/utils/renderBlocks";
+
 export interface Medication {
     id: string;
     name: string;
@@ -15,6 +17,12 @@ export interface Medication {
     ai_use_and_conditions:string;
     ai_contraindications:string;
     vector_similar_ranking: Record<string, number>;
+    meta_description_blocks: BlockContent[];
+    description_blocks: BlockContent[];
+    use_and_conditions_blocks: BlockContent[];
+    contra_indications_blocks: BlockContent[];
+    warning_blocks: BlockContent[];
+    dosing_blocks: BlockContent[];
 }
 
 export interface MedicationResponse {

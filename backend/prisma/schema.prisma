@@ -54,6 +54,12 @@ model Drug {
   ai_contraindications       String?
   ai_description              String?
   vector_similar_ranking      Json?
+  meta_description_blocks     Json?
+  description_blocks          Json?
+  use_and_conditions_blocks   Json?
+  contra_indications_blocks   Json?
+  warning_blocks              Json?
+  dosing_blocks               Json?
   created_at                  DateTime  @default(now())
   updated_at                  DateTime  @updatedAt
 
