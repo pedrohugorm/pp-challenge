@@ -7,9 +7,18 @@ import { ChatService } from './chat/chat.service';
 import { SearchMedicalDataService } from './chat/search-medical-data.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { MedicationsModule } from './medications/medications.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 200,
+        },
+      ],
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),

@@ -10,6 +10,7 @@ import {
   SearchMedicalDataRequest,
   SearchMedicalDataService,
 } from './search-medical-data.service';
+import { rateLimiter } from '../utils/rate-limiter';
 
 export const MedicationSchema = z.object({
   id: z.string({ description: 'id of the medication' }),
@@ -53,6 +54,9 @@ export class ChatService {
   }
 
   async chat(prompt: string, context: ChatCompletion[]): Promise<ChatResponse> {
+    // Two OpenAI operations, hence 2 points.
+    await rateLimiter.consume('chat', 2);
+
     const CONTEXT_SIZE = 10;
 
     const response = await this.openai.chat.completions.create({
