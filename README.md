@@ -140,6 +140,11 @@ The application architecture reflects several key design decisions that balance 
 
 ## Setup Instructions
 
+### Environment Configuration
+
+1. **OpenAI API Key**: Set the `OPENAI_API_KEY` environment variable in the `docker/.env` file
+2. **Environment Template**: See [docker/.env.example](docker/.env.example) for the complete list of required environment variables
+
 ### Install Spacy en_core_web_sm
 
 ```bash
