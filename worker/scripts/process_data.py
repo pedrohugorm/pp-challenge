@@ -7,9 +7,12 @@ import json
 from dotenv import load_dotenv
 from scripts.clean_json_html import clean_json_html
 from scripts.enhance_content import enhance_content
+from scripts.extract_tags import extract_condition_tags, extract_substance_tags, extract_indication_tags, \
+    extract_strengths_and_concentrations_tags, extract_population_tags
 from scripts.structure_json_html import structure_json_html
 from scripts.prepare_item_for_vector_search import prepare_item_for_vector_search
-from scripts.summarize_description import summarize_meta_description, summarize_use_and_conditions, summarize_contra_indications, summarize_dosing, summarize_warnings, summarize_description
+from scripts.summarize_description import summarize_meta_description, summarize_use_and_conditions, \
+    summarize_contra_indications, summarize_dosing, summarize_warnings, summarize_description
 from scripts.upsert_to_chromadb import upsert_q_items_to_chromadb
 from scripts.upsert_items_to_postgres import upsert_items_to_postgres
 from scripts.fix_html_syntax import fix_html_syntax
@@ -59,13 +62,18 @@ async def process_single_item(item):
     q_item = prepare_item_for_vector_search(item)
 
     # Run all summarize functions in parallel
-    summary, description, use_and_conditions, contra_indications_warnings, warnings, dosing = await asyncio.gather(
+    summary, description, use_and_conditions, contra_indications_warnings, warnings, dosing, tags_condition, tags_substance, tags_indication, tags_strengths_concentrations, tags_population = await asyncio.gather(
         summarize_meta_description(q_item),
         summarize_description(q_item),
         summarize_use_and_conditions(q_item),
         summarize_contra_indications(q_item),
         summarize_warnings(q_item),
-        summarize_dosing(q_item)
+        summarize_dosing(q_item),
+        extract_condition_tags(q_item),
+        extract_substance_tags(q_item),
+        extract_indication_tags(q_item),
+        extract_strengths_and_concentrations_tags(q_item),
+        extract_population_tags(q_item)
     )
 
     q_item['metaDescription'] = summary
@@ -85,6 +93,12 @@ async def process_single_item(item):
 
     q_item['dosing'] = dosing
     item['label']['dosing'] = dosing
+
+    q_item['tags_condition'] = tags_condition
+    q_item['tags_substance'] = tags_substance
+    q_item['tags_indications'] = tags_indication
+    q_item['tags_strengths_concentrations'] = tags_strengths_concentrations
+    q_item['tags_population'] = tags_population
 
     # Create view_blocks as a simple dictionary like q_item
     view_blocks = {
@@ -113,14 +127,14 @@ async def main():
 
     with open("./data/Labels.json", "r", encoding="utf-8") as f:
         json_array = json.load(f)
-        
+
         # Filter items if needed (uncomment the line below if you want to process only specific items)
         json_array = [item for item in json_array if item['drugName'] in 'Ebglyss']
-        
+
         # Process all items in parallel
         print(f"Processing {len(json_array)} items in parallel...")
         results = await asyncio.gather(*[process_single_item(item) for item in json_array])
-        
+
         # Collect results
         for item, q_item, view_blocks in results:
             items.append(item)
