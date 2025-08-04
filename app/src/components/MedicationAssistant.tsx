@@ -37,21 +37,6 @@ export default function MedicationAssistant() {
         }
     }, []);
 
-    // Save complete state to localStorage
-    const saveState = () => {
-        try {
-            const state: AssistantState = {
-                chatBlocks,
-                messageText,
-                isLoading,
-                contextList
-            };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        } catch (error) {
-            console.error('Error saving state to localStorage:', error);
-        }
-    };
-
     const assistantMessage: ChatBlock = {
         type: 'p',
         contents: ["Hello! I'm here to help you with medication information. How can I assist you today?"],
