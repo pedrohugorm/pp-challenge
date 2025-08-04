@@ -24,7 +24,7 @@ export function renderBlock({block, headerOffset}: RenderBlockProps): React.Reac
 
     // Check if contents is empty or null
     if (!contents || contents.length === 0) {
-        return "EMPTY";
+        return null;
     }
 
     // Process contents recursively

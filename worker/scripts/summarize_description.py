@@ -63,6 +63,7 @@ Strict Limitations:
 - Do not use HTML entities (e.g., &nbsp;, &copy;). Use plain characters only.
 - Do not nest <p> tags inside <li> elements. Each <li> must contain plain text only.
 - Do not include tag attributes, classes, or styles.
+- It is invalid to place any header tags (<h1>–<h6>) inside paragraph tags (<p>). Headers and paragraphs must be separate elements.
 
 ## Original content:
 {description_content}
@@ -147,6 +148,7 @@ Strict Limitations:
 - Do not use HTML entities (e.g., &nbsp;, &copy;). Use plain characters only.
 - Do not nest <p> tags inside <li> elements. Each <li> must contain plain text only.
 - Do not include tag attributes, classes, or styles.
+- It is invalid to place any header tags (<h1>–<h6>) inside paragraph tags (<p>). Headers and paragraphs must be separate elements.
 
 ## Original content:
 {description_content}
@@ -223,6 +225,7 @@ Additional Restrictions:
 - Do not include HTML entities such as &nbsp;, &lt;, &gt;, &amp;, &copy;, etc. Use plain text characters only.
 - If emphasis, sectioning, or formatting is necessary, convey it using plain language and the allowed tags only.
 - Do not place <p> tags inside <li> elements. Each <li> must contain plain text only—no nested <p> tags.
+- It is invalid to place any header tags (<h1>–<h6>) inside paragraph tags (<p>). Headers and paragraphs must be separate elements.
 - Any output containing disallowed tags, attributes, or entities will be treated as invalid.
 
 Clinical Guidelines:
@@ -314,6 +317,7 @@ Additional Restrictions:
 - Do not include HTML entities such as &nbsp;, &lt;, &gt;, &amp;, &copy;, etc. Use plain text characters only.
 - If emphasis, sectioning, or formatting is necessary, convey it using plain language and the allowed tags only.
 - Do not place <p> tags inside <li> elements. Each <li> must contain plain text only—no nested <p> tags.
+- It is invalid to place any header tags (<h1>–<h6>) inside paragraph tags (<p>). Headers and paragraphs must be separate elements.
 - Any output containing disallowed tags, attributes, or entities will be treated as invalid.
 
 Clinical Guidelines:
@@ -396,6 +400,7 @@ Additional Restrictions:
 - Do not include HTML entities such as &nbsp;, &lt;, &gt;, &amp;, &copy;, etc. Use plain text characters only.
 - If emphasis, sectioning, or formatting is necessary, convey it using plain language and the allowed tags only.
 - Do not place <p> tags inside <li> elements. Each <li> must contain plain text only—no nested <p> tags.
+- It is invalid to place any header tags (<h1>–<h6>) inside paragraph tags (<p>). Headers and paragraphs must be separate elements.
 - Any output containing disallowed tags, attributes, or entities will be treated as invalid.
 
 Clinical Guidelines:
@@ -480,6 +485,7 @@ Additional Restrictions:
 - Do not include HTML entities such as &nbsp;, &lt;, &gt;, &amp;, &copy;, etc. Use plain text characters only.
 - If emphasis, sectioning, or formatting is necessary, convey it using plain language and the allowed tags only.
 - Do not place <p> tags inside <li> elements. Each <li> must contain plain text only—no nested <p> tags.
+- It is invalid to place any header tags (<h1>–<h6>) inside paragraph tags (<p>). Headers and paragraphs must be separate elements.
 - Any output containing disallowed tags, attributes, or entities will be treated as invalid.
 
 Clinical Guidelines:
