@@ -1,5 +1,33 @@
 # Medication Search for PrescriberPoint
 
+## Setup Instructions
+
+### Environment Configuration
+
+1. **OpenAI API Key**: Set the `OPENAI_API_KEY` environment variable in the `docker/.env` file
+2. **Environment Template**: See [docker/.env.example](docker/.env.example) for the complete list of required environment variables
+
+### Install Spacy en_core_web_sm for the python scripts
+
+```bash
+python -m spacy download en_core_web_sm
+```
+
+### Running the Application
+
+To start all services, run the following command from the project root:
+
+```bash
+docker compose up --build
+```
+
+This will build and start all the required services:
+- Frontend (NextJS) on port 8080
+- Backend (NestJS) on port 3000
+- PostgreSQL database on port 5432
+- Redis cache on port 6379
+- ChromaDB vector database on port 8000
+
 ## System Design
 
 The application follows a microservices architecture with the following components:
@@ -137,31 +165,3 @@ The application architecture reflects several key design decisions that balance 
 - **Microservices Architecture**: Modular design allows independent scaling of frontend, backend, and data pipeline components
 - **AI-Powered Processing**: Automated content enhancement and summarization reduces manual data processing overhead
 - **Efficient Data Pipeline**: Batch processing with proper chunking handles large medication datasets effectively
-
-## Setup Instructions
-
-### Environment Configuration
-
-1. **OpenAI API Key**: Set the `OPENAI_API_KEY` environment variable in the `docker/.env` file
-2. **Environment Template**: See [docker/.env.example](docker/.env.example) for the complete list of required environment variables
-
-### Install Spacy en_core_web_sm for the python scripts
-
-```bash
-python -m spacy download en_core_web_sm
-```
-
-### Running the Application
-
-To start all services, run the following command from the project root:
-
-```bash
-docker compose up --build
-```
-
-This will build and start all the required services:
-- Frontend (NextJS) on port 8080
-- Backend (NestJS) on port 3000
-- PostgreSQL database on port 5432
-- Redis cache on port 6379
-- ChromaDB vector database on port 8000
