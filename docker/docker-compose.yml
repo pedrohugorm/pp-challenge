@@ -42,6 +42,43 @@ services:
         target: /chroma/chroma
     restart: unless-stopped
 
+  app:
+    container_name: nextjs-app
+    build:
+      context: ../app
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - postgres
+      - redis
+      - chromadb
+    restart: unless-stopped
+
+  backend:
+    container_name: nestjs-backend
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - CHROMA_URL=http://chromadb:8000
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/drugs_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+      - chromadb
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     driver: local
