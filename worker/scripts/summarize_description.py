@@ -4,8 +4,9 @@ import asyncio
 from typing import Dict, Any
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
-# Removed import of ChatCompletionSystemMessageParam and ChatCompletionUserMessageParam
 from rate_limiter import get_rate_limiter
+from scripts.rate_limiter import get_token_bucket_rate_limiter
+from token_counter import count_tokens
 
 # Load environment variables from .env file in the parent directory (project root)
 load_dotenv('../.env')
@@ -464,7 +465,7 @@ async def summarize_dosing(q_item: Dict[str, Any]) -> str:
     content = q_item['label']['dosageAndAdministration']
     content += q_item['label']['dosageFormsAndStrengths']
 
-    # If no label.description found, return empty string
+    # If no label.description found, return an empty string
     if not content:
         return ""
 
@@ -505,27 +506,37 @@ Clinical Guidelines:
 """
 
     try:
-        print(f'Summarizing Uses and Conditions {q_item["drugName"]}...')
+        print(f'Summarizing Dosing {q_item["drugName"]}...')
         
+        # Count tokens in the prompt
+        prompt_tokens = count_tokens(prompt, "gpt-4o")
+
         # Get rate limiter for the model
         model = "gpt-4o"
-        rate_limiter = get_rate_limiter(model)
+        # rate_limiter = get_rate_limiter(model)
+        rate_limiter = get_token_bucket_rate_limiter(model)
         
         # Use rate limiter before making the API call
-        async with rate_limiter:
-            # Use GPT-4 for the best summarization quality
-            response = await client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": prompt},
-                ],
-                temperature=0.1,  # Low temperature for more deterministic output
-                max_tokens=700,
-            )
+        await rate_limiter.acquire(prompt_tokens)
 
-        print(f'Summarized Uses and Conditions {q_item["drugName"]}...')
+        # Use GPT-4 for the best summarization quality
+        response = await client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": prompt},
+            ],
+            temperature=0.1,  # Low temperature for more deterministic output
+            max_tokens=700,
+        )
 
+        print(f'Summarized Dosing {q_item["drugName"]}...')
+        
+        # Count tokens in the response
         summary = response.choices[0].message.content.strip()
+        response_tokens = count_tokens(summary, "gpt-4o")
+        print(f'Response tokens: {response_tokens}')
+        print(f'Total tokens used: {prompt_tokens + response_tokens}')
+        
         return summary
 
     except Exception as e:

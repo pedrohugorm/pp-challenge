@@ -48,3 +48,4 @@ chromadb>=0.4.22
 psycopg2-binary>=2.9.0
 elasticsearch>=9.0.0
 sentence-transformers>=2.0.0
+aiolimiter>=1.2.1
