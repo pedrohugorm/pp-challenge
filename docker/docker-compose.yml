@@ -67,6 +67,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - ALLOWED_ORIGINS=http://localhost:8080
       - CHROMA_URL=http://chromadb:8000
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/drugs_db
       - REDIS_HOST=redis
