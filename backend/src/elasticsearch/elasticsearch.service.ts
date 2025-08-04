@@ -15,9 +15,12 @@ export class ElasticsearchService implements OnModuleInit {
   constructor(private configService: ConfigService) {}
 
   async onModuleInit() {
-    const esHost = this.configService.get('ELASTICSEARCH_HOST', 'localhost');
-    const esPort = this.configService.get('ELASTICSEARCH_PORT', '9200');
-    const esUrl = this.configService.get(
+    const esHost: string = this.configService.get(
+      'ELASTICSEARCH_HOST',
+      'localhost',
+    );
+    const esPort: string = this.configService.get('ELASTICSEARCH_PORT', '9200');
+    const esUrl: string = this.configService.get(
       'ELASTICSEARCH_URL',
       `http://${esHost}:${esPort}`,
     );
@@ -51,25 +54,39 @@ export class ElasticsearchService implements OnModuleInit {
         query: {
           multi_match: {
             query,
-            fields: ['drugName', 'genericName', 'title', 'ai_description', 'ai_warnings', 'ai_dosing', 'ai_use_and_conditions', 'ai_contraindications', 'metaDescription'],
+            fields: [
+              'drugName',
+              'genericName',
+              'title',
+              'ai_description',
+              'ai_warnings',
+              'ai_dosing',
+              'ai_use_and_conditions',
+              'ai_contraindications',
+              'metaDescription',
+            ],
             type: 'best_fields',
-            fuzziness: 'AUTO'
-          }
+            fuzziness: 'AUTO',
+          },
         },
         sort: [{ _score: { order: 'desc' } }],
         size: limit + 1, // Take one extra to check if there are more
+        search_after: [],
       };
 
       if (cursor) {
         searchQuery.search_after = [cursor];
       }
 
-      console.log('Elasticsearch search query:', JSON.stringify(searchQuery, null, 2));
+      console.log(
+        'Elasticsearch search query:',
+        JSON.stringify(searchQuery, null, 2),
+      );
       const response = await this.client.search(searchQuery);
       console.log('Elasticsearch response hits:', response.hits.total);
 
       const medications = response.hits.hits.map((hit) => {
-        const source = hit._source as any;
+        const source = hit._source as { slug: string };
         return {
           slug: source.slug,
           score: hit._score,
@@ -94,37 +111,12 @@ export class ElasticsearchService implements OnModuleInit {
       };
     } catch (error) {
       console.error('Elasticsearch search error:', error);
-      // Fallback to empty result if Elasticsearch is not available
+      // Fallback to an empty result if Elasticsearch is not available
       return {
         medications: [],
         nextCursor: undefined,
         hasMore: false,
       };
-    }
-  }
-
-  async indexMedication(medication: any): Promise<void> {
-    try {
-      await this.client.index({
-        index: this.indexName,
-        id: medication.id,
-        body: medication,
-      });
-    } catch (error) {
-      console.error('Error indexing medication:', error);
-    }
-  }
-
-  async bulkIndexMedications(medications: any[]): Promise<void> {
-    try {
-      const operations = medications.flatMap((medication) => [
-        { index: { _index: this.indexName, _id: medication.id } },
-        medication,
-      ]);
-
-      await this.client.bulk({ body: operations });
-    } catch (error) {
-      console.error('Error bulk indexing medications:', error);
     }
   }
 }
