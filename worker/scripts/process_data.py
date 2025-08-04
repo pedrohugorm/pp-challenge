@@ -15,6 +15,7 @@ from scripts.upsert_items_to_postgres import upsert_items_to_postgres
 from scripts.fix_html_syntax import fix_html_syntax
 from scripts.find_similar_drugs_by_name import find_similar_drugs_by_name
 from scripts.update_vector_similar_ranking import update_vector_similar_ranking
+from scripts.upsert_items_to_elasticsearch import upsert_items_to_elasticsearch
 
 # Load environment variables from .env file in the parent directory (project root)
 load_dotenv('../.env')
@@ -137,8 +138,8 @@ async def main():
     with open("./data/q_items.json", "w", encoding="utf-8") as outfile:
         json.dump(q_items, outfile, ensure_ascii=False, indent=2)
 
+    upsert_items_to_elasticsearch(q_items)
     upsert_q_items_to_chromadb(q_items)
-
     upsert_items_to_postgres(q_items, structured_items_json_array, all_view_blocks)
 
     for q_item in q_items:

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Drug } from '@prisma/client';
+import { ElasticsearchService } from '../elasticsearch/elasticsearch.service';
 
 export interface MedicationsResult {
   medications: Partial<Drug>[];
@@ -10,7 +11,10 @@ export interface MedicationsResult {
 
 @Injectable()
 export class MedicationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly elasticsearchService: ElasticsearchService,
+  ) {}
 
   async getMedications(
     cursor?: string,
@@ -116,6 +120,69 @@ export class MedicationsService {
   }
 
   async searchMedications(
+    query: string,
+    cursor?: string,
+    limit: number = 20,
+  ): Promise<MedicationsResult> {
+    try {
+      // Try Elasticsearch search first
+      const elasticsearchResult =
+        await this.elasticsearchService.searchMedications(query, cursor, limit);
+
+      // If Elasticsearch returns results, fetch full data from Prisma
+      if (elasticsearchResult.medications.length > 0) {
+        const slugs = elasticsearchResult.medications.map(m => m.slug);
+        
+        // Fetch full medication data from Prisma using the slugs
+        const medications = await this.prisma.drug.findMany({
+          where: {
+            slug: {
+              in: slugs,
+            },
+          },
+          select: {
+            id: true,
+            name: true,
+            generic_name: true,
+            product_type: true,
+            effective_time: true,
+            title: true,
+            slug: true,
+            updated_at: true,
+            meta_description: true,
+            meta_description_blocks: true,
+            labeler: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        });
+
+        // Sort medications to match the order returned by Elasticsearch
+        const sortedMedications = slugs.map(slug => 
+          medications.find(m => m.slug === slug)
+        ).filter((medication): medication is NonNullable<typeof medication> => medication !== undefined);
+
+        return {
+          medications: sortedMedications,
+          nextCursor: elasticsearchResult.nextCursor,
+          hasMore: elasticsearchResult.hasMore,
+        };
+      }
+    } catch (error) {
+      console.log(
+        'Elasticsearch search failed, falling back to database search:',
+        error,
+      );
+    }
+
+    // Fallback to database search if Elasticsearch fails or returns no results
+    return this.searchMedicationsInDatabase(query, cursor, limit);
+  }
+
+  private async searchMedicationsInDatabase(
     query: string,
     cursor?: string,
     limit: number = 20,

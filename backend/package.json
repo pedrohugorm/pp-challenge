@@ -23,9 +23,11 @@
     "db:migrate:reset": "npx prisma migrate reset",
     "db:migrate:status": "npx prisma migrate status",
     "db:generate": "npx prisma generate",
-    "db:studio": "npx prisma studio"
+    "db:studio": "npx prisma studio",
+    "es:index": "ts-node scripts/index-medications-to-elasticsearch.ts"
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^9.1.0",
     "@keyv/redis": "^5.1.0",
     "@modelcontextprotocol/sdk": "^1.17.1",
     "@nestjs/cache-manager": "^3.0.1",

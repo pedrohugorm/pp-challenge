@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MedicationsController } from './medications.controller';
 import { MedicationsService } from './medications.service';
 import { PrismaModule } from '../prisma/prisma.module';
+import { ElasticsearchModule } from '../elasticsearch/elasticsearch.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv } from '@keyv/redis';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -28,6 +29,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
       },
     }),
     PrismaModule,
+    ElasticsearchModule,
   ],
   controllers: [MedicationsController],
   providers: [MedicationsService],

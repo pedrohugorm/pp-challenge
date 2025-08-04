@@ -44,6 +44,11 @@ OPENAI_API_KEY=your_openai_api_key_here
 
 # ChromaDB (Optional, defaults to localhost:8000)
 CHROMA_URL=http://localhost:8000
+
+# Elasticsearch (Optional, defaults to localhost:9200)
+ELASTICSEARCH_HOST=localhost
+ELASTICSEARCH_PORT=9200
+ELASTICSEARCH_URL=http://localhost:9200
 ```
 
 **Note**: You'll need to:
@@ -87,6 +92,34 @@ $ npm run db:migrate:status
 ```bash
 $ npm run db:studio
 ```
+
+## Elasticsearch Setup
+
+This project now includes Elasticsearch for advanced full-text search capabilities. The search functionality will automatically fall back to database search if Elasticsearch is not available.
+
+### 1. Start Elasticsearch
+Make sure Elasticsearch is running. If using Docker Compose, it should be started automatically with the project.
+
+### 2. Index Medications
+After setting up the database and Elasticsearch, index the medications for search:
+
+```bash
+$ npm run es:index
+```
+
+This will:
+- Create the Elasticsearch index with proper mappings
+- Index all medications from the database
+- Enable full-text search with fuzzy matching, phrase matching, and content search
+
+### 3. Search Features
+The Elasticsearch integration provides:
+- **Fuzzy matching**: Handles typos and partial matches
+- **Phrase matching**: Exact phrase searches with boosted relevance
+- **Content search**: Searches through AI-generated descriptions, warnings, dosing, etc.
+- **Multi-field search**: Searches across name, generic name, title, and content fields
+- **Relevance scoring**: Results are ranked by relevance score
+- **Fallback**: Automatically falls back to database search if Elasticsearch is unavailable
 
 ## Compile and run the project
 
