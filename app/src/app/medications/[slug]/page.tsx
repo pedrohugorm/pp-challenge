@@ -81,7 +81,7 @@ export default async function MedicationPage({ params }: MedicationPageProps) {
                                 </Link>
                             </div>
 
-                            <div>
+                            <div className="main-content">
                                 <h1>{medication.name}</h1>
                                 <p>Labeler: {medication.labeler.name}</p>
                                 <p>Generic name: {medication.generic_name}</p>
