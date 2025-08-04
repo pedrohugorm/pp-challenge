@@ -165,3 +165,36 @@ The application architecture reflects several key design decisions that balance 
 - **Microservices Architecture**: Modular design allows independent scaling of frontend, backend, and data pipeline components
 - **AI-Powered Processing**: Automated content enhancement and summarization reduces manual data processing overhead
 - **Efficient Data Pipeline**: Batch processing with proper chunking handles large medication datasets effectively
+
+## Limitations & Future Enhancements
+
+The current implementation has several limitations, some due to scope or time constraints, that present opportunities for future improvements:
+
+### AI Assistant Improvements
+- **Enhanced Interactions**: The AI chat assistant requires refinement for more sophisticated conversational capabilities and better context understanding
+- **Response Quality**: Improved prompt engineering and response generation for more accurate medication-related interactions
+
+### Data Pipeline Automation
+- **Temporal Integration**: The data pipeline can be fully automated using Temporal for better workflow orchestration, error handling, and retry mechanisms
+- **Scheduled Processing**: Automated data refresh and content enhancement cycles
+
+### Database Optimization
+- **Field Optimization**: Database schema and field structures can be optimized for better query performance and storage efficiency
+- **Indexing Strategy**: Enhanced indexing for improved search performance across large medication datasets
+
+### Search Capabilities Enhancement
+- **ElasticSearch Integration**: Current medication search is basic and can be significantly improved by introducing ElasticSearch for advanced search capabilities, fuzzy matching, and complex query support
+- **Advanced Search Features**: Implementation of faceted search, autocomplete, and relevance scoring for better user experience
+
+### Rate Limiting Enhancements
+- **Token-Based Limiting**: Current rate limiters can be improved to use tokens used versus tokens available instead of API calls, as OpenAI uses both for limiting
+- **Dynamic Rate Adjustment**: Adaptive rate limiting based on usage patterns and API quotas
+
+### Advanced AI Integration
+- **Vertex AI Integration**: Integration with Google's Vertex AI can provide larger context windows and even better SEO-quality content production
+- **Multi-Model Approach**: Leveraging multiple AI models for specialized tasks (content generation, summarization, classification)
+
+### Performance & Scalability
+- **Caching Strategy**: Enhanced Redis caching with more granular cache invalidation
+- **Load Balancing**: Improved load balancing for high-traffic scenarios
+- **Monitoring & Observability**: Enhanced logging and monitoring for better system visibility
