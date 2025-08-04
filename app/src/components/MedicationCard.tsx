@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import {type Medication} from '@/services/medicationService';
-import {renderBlocks} from "@/utils/renderBlocks";
+import {RenderBlocks} from "@/utils/renderBlocks";
 
 interface MedicationCardProps {
     medication: Medication;
@@ -18,7 +18,9 @@ export default function MedicationCard({medication}: MedicationCardProps) {
                 <div className="space-y-1 lg:space-y-2 text-sm text-gray-600">
                     <p>Labeler: {medication.labeler.name}</p>
                 </div>
-                <div className="space-y-1 lg:space-y-2 text-sm text-gray-600 flex-grow">{renderBlocks(medication.meta_description_blocks, 0)}</div>
+                <div className="space-y-1 lg:space-y-2 text-sm text-gray-600 flex-grow">
+                    <RenderBlocks blocks={medication.meta_description_blocks} headerOffset={0} />
+                </div>
             </div>
         </Link>
     );

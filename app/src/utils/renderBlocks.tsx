@@ -19,8 +19,13 @@ interface RenderBlockProps {
     headerOffset: number
 }
 
-export function renderBlock({block, headerOffset}: RenderBlockProps): React.ReactElement {
+export function renderBlock({block, headerOffset}: RenderBlockProps): React.ReactElement | null {
     const {type, contents} = block;
+
+    // Check if contents is empty or null
+    if (!contents || contents.length === 0) {
+        return "EMPTY";
+    }
 
     // Process contents recursively
     const children: React.ReactNode[] = [];
@@ -28,16 +33,22 @@ export function renderBlock({block, headerOffset}: RenderBlockProps): React.Reac
 
     contents.forEach((content, index) => {
         if (typeof content === 'string') {
-            children.push(content);
+            // Only add non-empty strings
+            if (content.trim()) {
+                children.push(content);
+            }
         } else if (content && typeof content === 'object' && 'type' in content && 'contents' in content) {
             // Recursively render nested blocks
-            children.push(
-                React.createElement(
-                    React.Fragment,
-                    {key: index},
-                    renderBlock({block: content as BlockContent, headerOffset})
-                )
-            );
+            const nestedBlock = renderBlock({block: content as BlockContent, headerOffset});
+            if (nestedBlock !== null) {
+                children.push(
+                    React.createElement(
+                        React.Fragment,
+                        {key: index},
+                        nestedBlock
+                    )
+                );
+            }
         } else if (content && typeof content === 'object' && 'id' in content && 'name' in content && 'slug' in content) {
             // Handle embed medication data directly in contents
             const medicationData = content as EmbedMedicationData;
@@ -53,6 +64,11 @@ export function renderBlock({block, headerOffset}: RenderBlockProps): React.Reac
             console.warn('Invalid content in block:', content);
         }
     });
+
+    // Return null if no meaningful children were created
+    if (children.length === 0) {
+        return null;
+    }
 
     // Check if there's a custom component for this type
     if (componentMap[type]) {
@@ -173,7 +189,7 @@ const EmbedMedication = ({contents}: { contents: (string | BlockContent | EmbedM
 
 // Document component
 const Document = ({children}: { children: React.ReactNode }) => {
-    return <div>{children}</div>;
+    return <>{children}</>;
 };
 
 // Component map
@@ -213,9 +229,12 @@ export function renderBlocks(blocks: BlockContent[], headerOffset: number): Reac
         return [];
     }
 
-    return blocks.map((block, index) =>
-        React.createElement(React.Fragment, {key: index}, renderBlock({block, headerOffset}))
-    );
+    return blocks.map((block, index) => {
+        const renderedBlock = renderBlock({block, headerOffset});
+        return renderedBlock !== null ? 
+            React.createElement(React.Fragment, {key: index}, renderedBlock) : 
+            null;
+    }).filter(Boolean) as React.ReactElement[];
 }
 
 // React component for easy usage
