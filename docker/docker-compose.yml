@@ -42,6 +42,22 @@ services:
         target: /chroma/chroma
     restart: unless-stopped
 
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - type: volume
+        source: elasticsearch_data
+        target: /usr/share/elasticsearch/data
+    restart: unless-stopped
+
   app:
     container_name: nextjs-app
     build:
@@ -55,6 +71,7 @@ services:
       - postgres
       - redis
       - chromadb
+      - elasticsearch
     restart: unless-stopped
 
   backend:
@@ -72,12 +89,14 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/drugs_db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
     env_file:
       - .env
     depends_on:
       - postgres
       - redis
       - chromadb
+      - elasticsearch
     restart: unless-stopped
 
 volumes:
@@ -86,4 +105,6 @@ volumes:
   redis_data:
     driver: local
   chromadb_data:
+    driver: local
+  elasticsearch_data:
     driver: local
