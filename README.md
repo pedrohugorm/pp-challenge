@@ -1,5 +1,7 @@
 # Medication Search for PrescriberPoint
 
+    Disclaimer: This readme was generated with the help of AI. But I did ask it to type each detail instead of asking it to generate the content randomly.
+
 ## Setup Instructions
 
 ### Environment Configuration
