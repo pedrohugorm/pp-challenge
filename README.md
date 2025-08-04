@@ -111,6 +111,33 @@ graph TB
 - **Security-First**: Structured blocks prevent XSS while maintaining rich content presentation
 - **Scalable Processing**: Pipeline handles large datasets efficiently with proper chunking and summarization
 
+## Design Decisions
+
+The application architecture reflects several key design decisions that balance performance, security, and user experience:
+
+### Technology Stack Choices
+- **NextJS Frontend**: Chosen for server-side rendering capabilities, excellent SEO support, and modern React development experience
+- **NestJS Backend**: Selected for its robust TypeScript support, built-in dependency injection, and enterprise-grade architecture patterns
+- **ChromaDB + PostgreSQL**: Dual database approach enables both vector similarity search and traditional relational queries
+- **Redis Caching**: In-memory caching layer reduces database load and improves response times for frequently accessed medication data
+- **GPT-4o AI Model**: Selected for its extended context window and superior reasoning capabilities, enabling more comprehensive content processing and analysis
+- **Low Temperature Settings**: Most AI operations use low temperature settings to increase determinism and ensure consistent, reliable output across content enhancement and summarization tasks
+
+### Security-First Architecture
+- **Block Structure Rendering**: All AI-generated content is structured in secure blocks to prevent XSS attacks while maintaining rich presentation
+- **Rate Limiting**: Comprehensive rate limiting protects against API abuse and manages external service usage (OpenAI)
+- **Content Sanitization**: AI-processed content undergoes thorough sanitization before rendering
+
+### Performance Optimization
+- **Server-Side Generation**: Pre-rendered pages improve loading speeds and SEO performance
+- **Vector Search Integration**: ChromaDB enables semantic search and AI chat correlation for better user experience
+- **Dual Database Strategy**: Optimized storage patterns for different query types (similarity vs. structured)
+
+### Scalability Considerations
+- **Microservices Architecture**: Modular design allows independent scaling of frontend, backend, and data pipeline components
+- **AI-Powered Processing**: Automated content enhancement and summarization reduces manual data processing overhead
+- **Efficient Data Pipeline**: Batch processing with proper chunking handles large medication datasets effectively
+
 ## Setup Instructions
 
 ### Install Spacy en_core_web_sm
