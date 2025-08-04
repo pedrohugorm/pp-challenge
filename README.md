@@ -40,8 +40,10 @@ graph TB
     B --> C[ChromaDB]
     B --> D[Redis]
     B --> E[PostgreSQL]
+    B --> G[Elasticsearch]
     F[Data Pipeline - Python Scripts] --> C
     F --> E
+    F --> G
     
     style A fill:#61dafb,color:#000000
     style B fill:#e0234e
@@ -123,6 +125,7 @@ graph TB
     E --> F[Generate Chunks using Spacy]
     F --> G[Upsert to ChromaDB]
     F --> H[Upsert to PostgreSQL]
+    F --> I[Upsert to Elasticsearch]
 ```
 
 ### Pipeline Flow
