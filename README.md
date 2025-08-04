@@ -13,9 +13,9 @@ graph TB
     F[Data Pipeline - Python Scripts] --> C
     F --> E
     
-    style A fill:#000000,color:#ffffff
+    style A fill:#61dafb,color:#000000
     style B fill:#e0234e
-    style C fill:#000000,color:#ffffff
+    style C fill:#f7df1e,color:#000000
     style D fill:#dc382d
     style E fill:#336791
     style F fill:#3776ab
