@@ -55,6 +55,52 @@ def upsert_items_to_postgres(q_items, structured_items_json_array, view_blocks_a
         
         print(f"Successfully upserted {len(unique_labelers)} unique labelers")
         
+        # Extract and upsert tags from q_items
+        print("Extracting and upserting tags...")
+        
+        # Define tag categories and their corresponding q_item fields
+        tag_categories = {
+            "conditions": "tags_condition",
+            "substances": "tags_substance", 
+            "indications": "tags_indications",
+            "strengths_concentrations": "tags_strengths_concentrations",
+            "populations": "tags_population"
+        }
+        
+        # Collect all unique tags
+        all_tags = set()
+        
+        for q_item in q_items:
+            # Extract tags from each category
+            for category, field_name in tag_categories.items():
+                if field_name in q_item and q_item[field_name]:
+                    tags = q_item[field_name]
+                    for tag in tags['tags']:
+                        if tag:
+                            all_tags.add((tag.strip(), category))
+        
+        # Upsert tags to the tags table
+        tag_upsert_query = """
+            INSERT INTO tags (name, category, created_at, updated_at) 
+            VALUES (%s, %s, NOW(), NOW())
+            ON CONFLICT (name) DO NOTHING;
+        """
+        
+        for tag_name, category in all_tags:
+            cursor.execute(tag_upsert_query, (tag_name, category))
+        
+        print(f"Successfully upserted {len(all_tags)} unique tags")
+        
+        # Get a map of tag ID to name for all tags
+        tag_id_map_query = "SELECT id, name FROM tags"
+        cursor.execute(tag_id_map_query)
+        tag_results = cursor.fetchall()
+        
+        # Create a map of tag name to ID for easy lookup
+        tag_name_to_id_map = {tag['name']: tag['id'] for tag in tag_results}
+        
+        print(f"Created tag map with {len(tag_name_to_id_map)} tags")
+        
         # Process each item using indexes to access all arrays
         for i in range(len(structured_items_json_array)):
             structured_item = structured_items_json_array[i]
@@ -218,6 +264,61 @@ def upsert_items_to_postgres(q_items, structured_items_json_array, view_blocks_a
                     dosing_blocks
                 )
             )
+            
+            # Create drug-tag relationships
+            drug_tags = set()
+            
+            # Extract tags for this specific drug
+            q_item = q_items[i]
+            for category, field_name in tag_categories.items():
+                if field_name in q_item and q_item[field_name]:
+                    tag_list = q_item[field_name]
+                    for tag in tag_list['tags']:
+                        if tag:
+                            drug_tags.add((drug_id, tag.strip(), category))
+            
+            # Get current drug-tag relationships for this drug
+            current_drug_tags_query = """
+                SELECT dt.tag_id, t.name 
+                FROM drug_tags dt 
+                JOIN tags t ON dt.tag_id = t.id 
+                WHERE dt.drug_id = %s
+            """
+            cursor.execute(current_drug_tags_query, (drug_id,))
+            current_drug_tags = cursor.fetchall()
+            current_tag_ids = {row['tag_id'] for row in current_drug_tags}
+            
+            # Convert new tags to tag IDs
+            new_tag_ids = set()
+            for drug_id, tag_name, category in drug_tags:
+                if tag_name in tag_name_to_id_map:
+                    tag_id = tag_name_to_id_map[tag_name]
+                    new_tag_ids.add(tag_id)
+                else:
+                    print(f"Warning: Tag '{tag_name}' not found in tag map")
+            
+            # Remove tags that are no longer present
+            tags_to_remove = current_tag_ids - new_tag_ids
+            if tags_to_remove:
+                remove_drug_tags_query = """
+                    DELETE FROM drug_tags 
+                    WHERE drug_id = %s AND tag_id = ANY(%s)
+                """
+                cursor.execute(remove_drug_tags_query, (drug_id, list(tags_to_remove)))
+                print(f"Removed {len(tags_to_remove)} old tags for drug {drug_id}")
+            
+            # Insert new drug-tag relationships
+            tags_to_add = new_tag_ids - current_tag_ids
+            if tags_to_add:
+                drug_tag_insert_query = """
+                    INSERT INTO drug_tags (drug_id, tag_id, created_at) 
+                    VALUES (%s, %s, NOW())
+                """
+                
+                for tag_id in tags_to_add:
+                    cursor.execute(drug_tag_insert_query, (drug_id, tag_id))
+                
+                print(f"Added {len(tags_to_add)} new tags for drug {drug_id}")
 
         # Commit the entire transaction
         conn.commit()
