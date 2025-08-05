@@ -67,10 +67,8 @@ export default function LeftSidebar({ onFilterChange }: LeftSidebarProps) {
         // Clear the filter state
         setAllFilters({});
         
-        // Notify parent component
-        if (onFilterChange) {
-            onFilterChange({});
-        }
+        // Navigate to the base page without any query parameters
+        window.location.href = '/';
     };
 
     if (loading) {

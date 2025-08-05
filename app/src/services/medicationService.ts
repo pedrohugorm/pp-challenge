@@ -116,40 +116,4 @@ export async function searchMedications(query: string, filters?: SearchFilters):
     }
 }
 
-export async function searchMedicationsWithFilters(filters: SearchFilters): Promise<MedicationResponse> {
-    try {
-        // Map generic filters to backend-specific tag categories
-        const params = new URLSearchParams();
-        
-        // Map filter keys to backend tag categories
-        const tagMapping: { [key: string]: string } = {
-            'conditions': 'tags_condition',
-            'substances': 'tags_substance', 
-            'indications': 'tags_indications',
-            'strengths_concentrations': 'tags_strengths_concentrations',
-            'populations': 'tags_population'
-        };
-        
-        Object.entries(filters).forEach(([categoryId, values]) => {
-            const backendKey = tagMapping[categoryId];
-            if (backendKey && values.length > 0) {
-                params.append(backendKey, values.join(','));
-            }
-        });
-        
-        console.log('Sending filter request with params:', params.toString());
-        console.log('Original filters:', filters);
-        
-        const response = await fetch(`${getBackendUrl()}/medications/filter?${params.toString()}`);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('Error filtering medications:', error);
-        // Return an empty array on error to prevent an app crash
-        return { medications: [] };
-    }
-} 
+ 

@@ -6,7 +6,7 @@ import MedicationCard from '../components/MedicationCard';
 import MedicationAssistant from '../components/MedicationAssistant';
 import MedicationHeader from '../components/MedicationHeader';
 import LeftSidebar from '../components/LeftSidebar';
-import {fetchMedications, searchMedications, searchMedicationsWithFilters, type Medication, type SearchFilters} from '@/services/medicationService';
+import {fetchMedications, searchMedications, type Medication, type SearchFilters} from '@/services/medicationService';
 
 function SearchableContent() {
     const [medications, setMedications] = useState<Medication[]>([]);
@@ -97,14 +97,14 @@ export default function Home() {
 
     // Update URL when filters change
     const updateUrlWithFilters = (filters: { [key: string]: string[] }) => {
-        const params = new URLSearchParams(searchParams.toString());
+        // Create new URLSearchParams
+        const params = new URLSearchParams();
         
-        // Remove existing filter parameters
-        Array.from(params.keys()).forEach(key => {
-            if (key !== 'q' && key.startsWith('filter_')) {
-                params.delete(key);
-            }
-        });
+        // Preserve the search query
+        const query = searchParams.get('q');
+        if (query) {
+            params.set('q', query);
+        }
         
         // Add new filter parameters
         Object.entries(filters).forEach(([categoryId, values]) => {
@@ -113,19 +113,11 @@ export default function Home() {
             }
         });
         
-        // Preserve the search query
-        const query = searchParams.get('q');
-        if (query) {
-            params.set('q', query);
-        }
-        
-        const newUrl = `/?${params.toString()}`;
-        console.log('Updating URL to:', newUrl);
+        const newUrl = params.toString() ? `/?${params.toString()}` : '/';
         router.push(newUrl);
     };
 
     const handleFilterChange = (filters: { [key: string]: string[] }) => {
-        console.log('Filter change detected:', filters);
         setCurrentFilters(filters);
         updateUrlWithFilters(filters);
     };
