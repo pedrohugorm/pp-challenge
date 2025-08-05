@@ -13,7 +13,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
     onSearch, 
     placeholder = "Search medications...",
     initialValue = "",
-    onFilterChange
 }) => {
     const [query, setQuery] = useState(initialValue);
 

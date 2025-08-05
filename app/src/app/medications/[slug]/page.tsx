@@ -6,7 +6,6 @@ import MedicationAssistant from '@/components/MedicationAssistant';
 import SimilarMedicationsList from "@/components/SimilarMedicationsList";
 import {RenderBlocks} from "@/utils/renderBlocks";
 import {Metadata} from 'next';
-import SimplePill from "@/components/SimplePill";
 import TagsByCategory from "@/components/TagsByCategory";
 
 interface MedicationPageProps {

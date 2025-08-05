@@ -7,7 +7,7 @@ interface SimplePillProps {
     onClick?: () => void;
 }
 
-export default function SimplePill({ text, className = '', category, onClick }: SimplePillProps) {
+export default function SimplePill({ text, className = '', onClick }: SimplePillProps) {
     const handleClick = () => {
         if (onClick) {
             onClick();

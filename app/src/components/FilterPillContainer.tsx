@@ -104,4 +104,6 @@ const FilterPillContainer =
         );
     });
 
+FilterPillContainer.displayName = 'FilterPillContainer';
+
 export default FilterPillContainer; 
