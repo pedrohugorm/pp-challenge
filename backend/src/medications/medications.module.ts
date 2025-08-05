@@ -17,17 +17,17 @@ import { ThrottlerModule } from '@nestjs/throttler';
         },
       ],
     }),
-    // CacheModule.registerAsync({
-    //   useFactory: () => {
-    //     return {
-    //       stores: [
-    //         createKeyv(
-    //           `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
-    //         ),
-    //       ],
-    //     };
-    //   },
-    // }),
+    CacheModule.registerAsync({
+      useFactory: () => {
+        return {
+          stores: [
+            createKeyv(
+              `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
+            ),
+          ],
+        };
+      },
+    }),
     PrismaModule,
     ElasticsearchModule,
   ],
