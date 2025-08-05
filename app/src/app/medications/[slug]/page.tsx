@@ -6,6 +6,8 @@ import MedicationAssistant from '@/components/MedicationAssistant';
 import SimilarMedicationsList from "@/components/SimilarMedicationsList";
 import {RenderBlocks} from "@/utils/renderBlocks";
 import {Metadata} from 'next';
+import SimplePill from "@/components/SimplePill";
+import TagsByCategory from "@/components/TagsByCategory";
 
 interface MedicationPageProps {
     params: Promise<{
@@ -129,9 +131,22 @@ export default async function MedicationPage({params}: MedicationPageProps) {
                                 <div className="medication-section">
                                     <RenderBlocks blocks={medication.meta_description_blocks} headerOffset={0}/>
                                 </div>
+                                <h2>Substances</h2>
+                                <div className="medication-section">
+                                    <TagsByCategory
+                                        tagsByCategory={medication.tags_by_category}
+                                        categoryKeys={["substances"]}
+                                        className="mb-4"
+                                    />
+                                </div>
                                 {medication.use_and_conditions_blocks && medication.use_and_conditions_blocks.length > 0 && (
                                     <>
                                         <h2>Use and Conditions</h2>
+                                        <TagsByCategory
+                                            tagsByCategory={medication.tags_by_category}
+                                            categoryKeys={["populations", "conditions"]}
+                                            className="mb-4"
+                                        />
                                         <div className="medication-section">
                                             <RenderBlocks blocks={medication.use_and_conditions_blocks}
                                                           headerOffset={0}/>
@@ -141,6 +156,11 @@ export default async function MedicationPage({params}: MedicationPageProps) {
                                 {medication.dosing_blocks && medication.dosing_blocks.length > 0 && (
                                     <>
                                         <h2>Dosing and Administration</h2>
+                                        <TagsByCategory 
+                                            tagsByCategory={medication.tags_by_category} 
+                                            categoryKeys={["strengths_concentrations"]} 
+                                            className="mb-4" 
+                                        />
                                         <div className="medication-section">
                                             <RenderBlocks blocks={medication.dosing_blocks} headerOffset={0}/>
                                         </div>

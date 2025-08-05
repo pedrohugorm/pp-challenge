@@ -59,12 +59,45 @@ export class MedicationsService {
             name: true,
           },
         },
+        tags: {
+          select: {
+            tag: {
+              select: {
+                name: true,
+                category: true,
+              },
+            },
+          },
+        },
       },
     });
 
     // Check if there are more items
     const hasMore = medications.length > limit;
     const itemsToReturn = hasMore ? medications.slice(0, limit) : medications;
+
+    // Process medications to group tags by category
+    const processedMedications = itemsToReturn.map((medication) => {
+      // Group tags by category
+      const tagsByCategory: { [category: string]: string[] } = {};
+
+      medication.tags.forEach((drugTag: any) => {
+        const category = drugTag.tag.category;
+        const tagName = drugTag.tag.name;
+
+        if (!tagsByCategory[category]) {
+          tagsByCategory[category] = [];
+        }
+        tagsByCategory[category].push(tagName);
+      });
+
+      // Remove the raw tags array and add the grouped tags
+      const { tags, ...medicationWithoutTags } = medication;
+      return {
+        ...medicationWithoutTags,
+        tags_by_category: tagsByCategory,
+      };
+    });
 
     // Get the next cursor
     let nextCursor: string | undefined;
@@ -74,7 +107,7 @@ export class MedicationsService {
     }
 
     return {
-      medications: itemsToReturn,
+      medications: processedMedications,
       nextCursor,
       hasMore,
     };
@@ -113,10 +146,42 @@ export class MedicationsService {
             name: true,
           },
         },
+        tags: {
+          select: {
+            tag: {
+              select: {
+                name: true,
+                category: true,
+              },
+            },
+          },
+        },
       },
     });
 
-    return medication;
+    if (!medication) {
+      return null;
+    }
+
+    // Group tags by category
+    const tagsByCategory: { [category: string]: string[] } = {};
+
+    medication.tags.forEach((drugTag: any) => {
+      const category = drugTag.tag.category;
+      const tagName = drugTag.tag.name;
+
+      if (!tagsByCategory[category]) {
+        tagsByCategory[category] = [];
+      }
+      tagsByCategory[category].push(tagName);
+    });
+
+    // Remove the raw tags array and add the grouped tags
+    const { tags, ...medicationWithoutTags } = medication;
+    return {
+      ...medicationWithoutTags,
+      tags_by_category: tagsByCategory,
+    };
   }
 
   async searchMedications(
@@ -169,6 +234,16 @@ export class MedicationsService {
                 name: true,
               },
             },
+            tags: {
+              select: {
+                tag: {
+                  select: {
+                    name: true,
+                    category: true,
+                  },
+                },
+              },
+            },
           },
         });
 
@@ -180,8 +255,31 @@ export class MedicationsService {
               medication !== undefined,
           );
 
+        // Process medications to group tags by category
+        const processedMedications = sortedMedications.map((medication) => {
+          // Group tags by category
+          const tagsByCategory: { [category: string]: string[] } = {};
+
+          medication.tags.forEach((drugTag: any) => {
+            const category = drugTag.tag.category;
+            const tagName = drugTag.tag.name;
+
+            if (!tagsByCategory[category]) {
+              tagsByCategory[category] = [];
+            }
+            tagsByCategory[category].push(tagName);
+          });
+
+          // Remove the raw tags array and add the grouped tags
+          const { tags, ...medicationWithoutTags } = medication;
+          return {
+            ...medicationWithoutTags,
+            tags_by_category: tagsByCategory,
+          };
+        });
+
         return {
-          medications: sortedMedications,
+          medications: processedMedications,
           nextCursor: elasticsearchResult.nextCursor,
           hasMore: elasticsearchResult.hasMore,
         };
@@ -196,8 +294,6 @@ export class MedicationsService {
     // Fallback to database search if Elasticsearch fails or returns no results
     return this.searchMedicationsInDatabase(query, filters, cursor, limit);
   }
-
-
 
   async getTagsByCategory() {
     const tags = await this.prisma.tag.findMany({
@@ -417,12 +513,45 @@ export class MedicationsService {
             name: true,
           },
         },
+        tags: {
+          select: {
+            tag: {
+              select: {
+                name: true,
+                category: true,
+              },
+            },
+          },
+        },
       },
     });
 
     // Check if there are more items
     const hasMore = medications.length > limit;
     const itemsToReturn = hasMore ? medications.slice(0, limit) : medications;
+
+    // Process medications to group tags by category
+    const processedMedications = itemsToReturn.map((medication) => {
+      // Group tags by category
+      const tagsByCategory: { [category: string]: string[] } = {};
+
+      medication.tags.forEach((drugTag: any) => {
+        const category = drugTag.tag.category;
+        const tagName = drugTag.tag.name;
+
+        if (!tagsByCategory[category]) {
+          tagsByCategory[category] = [];
+        }
+        tagsByCategory[category].push(tagName);
+      });
+
+      // Remove the raw tags array and add the grouped tags
+      const { tags, ...medicationWithoutTags } = medication;
+      return {
+        ...medicationWithoutTags,
+        tags_by_category: tagsByCategory,
+      };
+    });
 
     // Get the next cursor
     let nextCursor: string | undefined;
@@ -432,7 +561,7 @@ export class MedicationsService {
     }
 
     return {
-      medications: itemsToReturn,
+      medications: processedMedications,
       nextCursor,
       hasMore,
     };

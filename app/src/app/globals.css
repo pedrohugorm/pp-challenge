@@ -19,6 +19,32 @@ body {
   color: var(--foreground);
 }
 
+/* Pill styles */
+.pill {
+  @apply px-4 py-2 rounded-full text-sm font-medium transition-all duration-200;
+}
+
+.pill-default {
+  @apply bg-gray-100 text-gray-700;
+}
+
+.pill-selected {
+  @apply bg-blue-500 text-white shadow-md;
+}
+
+.pill-focus {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1;
+}
+
+/* Hover states with proper specificity */
+.pill-default:hover {
+  @apply bg-gray-200;
+}
+
+.pill-selected:hover {
+  @apply bg-blue-600;
+}
+
 /* ChatBalloon link spacing */
 .chat-balloon p a {
   margin-top: 0.5rem;

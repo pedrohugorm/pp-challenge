@@ -23,6 +23,7 @@ export interface Medication {
     contra_indications_blocks: BlockContent[];
     warning_blocks: BlockContent[];
     dosing_blocks: BlockContent[];
+    tags_by_category?: { [category: string]: string[] };
 }
 
 export interface MedicationResponse {
