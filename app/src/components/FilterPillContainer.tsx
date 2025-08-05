@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import FilterPill from './FilterPill';
 
 interface FilterOption {
@@ -15,15 +15,27 @@ interface FilterPillContainerProps {
     defaultExpanded?: boolean;
 }
 
-export default function FilterPillContainer({ 
+export interface FilterPillContainerRef {
+    clearFilters: () => void;
+}
+
+const FilterPillContainer = forwardRef<FilterPillContainerRef, FilterPillContainerProps>(({ 
     sectionName, 
     options, 
     onSelectionChange,
     allowMultiple = false,
-    defaultExpanded = true
-}: FilterPillContainerProps) {
+    defaultExpanded = false
+}, ref) => {
     const [selectedValues, setSelectedValues] = useState<string[]>([]);
     const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+    // Expose clearFilters method to parent component
+    useImperativeHandle(ref, () => ({
+        clearFilters: () => {
+            setSelectedValues([]);
+            onSelectionChange?.([]);
+        }
+    }));
 
     const handlePillSelect = (value: string) => {
         let newSelectedValues: string[];
@@ -50,22 +62,28 @@ export default function FilterPillContainer({
 
     return (
         <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
+            <div 
+                className="flex items-center justify-between mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                onClick={toggleExpanded}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggleExpanded();
+                    }
+                }}
+                aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
+            >
                 <h3 className="text-sm font-semibold text-gray-700">{sectionName}</h3>
-                <button
-                    onClick={toggleExpanded}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                    aria-label={isExpanded ? 'Collapse section' : 'Expand section'}
+                <svg
+                    className={`w-4 h-4 transition-transform duration-200 text-gray-500 ${isExpanded ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                 >
-                    <svg
-                        className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                </button>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
             </div>
             
             {isExpanded && (
@@ -83,4 +101,6 @@ export default function FilterPillContainer({
             )}
         </div>
     );
-} 
+});
+
+export default FilterPillContainer; 

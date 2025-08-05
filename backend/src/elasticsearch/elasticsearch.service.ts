@@ -47,32 +47,105 @@ export class ElasticsearchService implements OnModuleInit {
     nextCursor?: string;
     hasMore: boolean;
   }> {
+    return this.searchMedicationsWithFilters(query, undefined, cursor, limit);
+  }
+
+  async searchMedicationsWithFilters(
+    query: string,
+    filters?: {
+      tags_condition?: string[];
+      tags_substance?: string[];
+      tags_indications?: string[];
+      tags_strengths_concentrations?: string[];
+      tags_population?: string[];
+    },
+    cursor?: string,
+    limit: number = 20,
+  ): Promise<{
+    medications: ElasticsearchSearchResult[];
+    nextCursor?: string;
+    hasMore: boolean;
+  }> {
     try {
-      // Simple search query
+      // Build the search query
       const searchQuery: any = {
         index: this.indexName,
         query: {
-          multi_match: {
-            query,
-            fields: [
-              'drugName',
-              'genericName',
-              'title',
-              'ai_description',
-              'ai_warnings',
-              'ai_dosing',
-              'ai_use_and_conditions',
-              'ai_contraindications',
-              'metaDescription',
+          bool: {
+            must: [
+              {
+                multi_match: {
+                  query,
+                  fields: [
+                    'drugName',
+                    'genericName',
+                    'title',
+                    'ai_description',
+                    'ai_warnings',
+                    'ai_dosing',
+                    'ai_use_and_conditions',
+                    'ai_contraindications',
+                    'metaDescription',
+                  ],
+                  type: 'best_fields',
+                  fuzziness: 'AUTO',
+                },
+              },
             ],
-            type: 'best_fields',
-            fuzziness: 'AUTO',
+            filter: [],
           },
         },
         sort: [{ _score: { order: 'desc' } }],
         size: limit + 1, // Take one extra to check if there are more
         search_after: [],
       };
+
+      // Add tag filters if provided
+      if (filters) {
+        const filterConditions: any[] = [];
+        
+        if (filters.tags_condition && filters.tags_condition.length > 0) {
+          filterConditions.push({
+            terms: {
+              tags_condition: filters.tags_condition,
+            },
+          });
+        }
+        
+        if (filters.tags_substance && filters.tags_substance.length > 0) {
+          filterConditions.push({
+            terms: {
+              tags_substance: filters.tags_substance,
+            },
+          });
+        }
+        
+        if (filters.tags_indications && filters.tags_indications.length > 0) {
+          filterConditions.push({
+            terms: {
+              tags_indications: filters.tags_indications,
+            },
+          });
+        }
+        
+        if (filters.tags_strengths_concentrations && filters.tags_strengths_concentrations.length > 0) {
+          filterConditions.push({
+            terms: {
+              tags_strengths_concentrations: filters.tags_strengths_concentrations,
+            },
+          });
+        }
+        
+        if (filters.tags_population && filters.tags_population.length > 0) {
+          filterConditions.push({
+            terms: {
+              tags_population: filters.tags_population,
+            },
+          });
+        }
+        
+        searchQuery.query.bool.filter = filterConditions;
+      }
 
       if (cursor) {
         searchQuery.search_after = [cursor];

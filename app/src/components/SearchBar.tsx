@@ -6,12 +6,14 @@ interface SearchBarProps {
     onSearch: (query: string) => void;
     placeholder?: string;
     initialValue?: string;
+    onFilterChange?: (filters: { [key: string]: string[] }) => void;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ 
     onSearch, 
     placeholder = "Search medications...",
-    initialValue = ""
+    initialValue = "",
+    onFilterChange
 }) => {
     const [query, setQuery] = useState(initialValue);
 

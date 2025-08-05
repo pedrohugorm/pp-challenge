@@ -121,18 +121,30 @@ export class MedicationsService {
 
   async searchMedications(
     query: string,
+    filters?: {
+      tags_condition?: string[];
+      tags_substance?: string[];
+      tags_indications?: string[];
+      tags_strengths_concentrations?: string[];
+      tags_population?: string[];
+    },
     cursor?: string,
     limit: number = 20,
   ): Promise<MedicationsResult> {
     try {
-      // Try Elasticsearch search first
+      // Try Elasticsearch search with filters first
       const elasticsearchResult =
-        await this.elasticsearchService.searchMedications(query, cursor, limit);
+        await this.elasticsearchService.searchMedicationsWithFilters(
+          query,
+          filters,
+          cursor,
+          limit,
+        );
 
       // If Elasticsearch returns results, fetch full data from Prisma
       if (elasticsearchResult.medications.length > 0) {
-        const slugs = elasticsearchResult.medications.map(m => m.slug);
-        
+        const slugs = elasticsearchResult.medications.map((m) => m.slug);
+
         // Fetch full medication data from Prisma using the slugs
         const medications = await this.prisma.drug.findMany({
           where: {
@@ -161,9 +173,12 @@ export class MedicationsService {
         });
 
         // Sort medications to match the order returned by Elasticsearch
-        const sortedMedications = slugs.map(slug => 
-          medications.find(m => m.slug === slug)
-        ).filter((medication): medication is NonNullable<typeof medication> => medication !== undefined);
+        const sortedMedications = slugs
+          .map((slug) => medications.find((m) => m.slug === slug))
+          .filter(
+            (medication): medication is NonNullable<typeof medication> =>
+              medication !== undefined,
+          );
 
         return {
           medications: sortedMedications,
@@ -173,13 +188,13 @@ export class MedicationsService {
       }
     } catch (error) {
       console.log(
-        'Elasticsearch search failed, falling back to database search:',
+        'Elasticsearch search with filters failed, falling back to database search:',
         error,
       );
     }
 
     // Fallback to database search if Elasticsearch fails or returns no results
-    return this.searchMedicationsInDatabase(query, cursor, limit);
+    return this.searchMedicationsInDatabase(query, filters, cursor, limit);
   }
 
   async filterMedicationsByTags(
@@ -195,16 +210,17 @@ export class MedicationsService {
   ): Promise<MedicationsResult> {
     try {
       // Try Elasticsearch filter first
-      const elasticsearchResult = await this.elasticsearchService.filterMedicationsByTags(
-        filters,
-        cursor,
-        limit,
-      );
+      const elasticsearchResult =
+        await this.elasticsearchService.filterMedicationsByTags(
+          filters,
+          cursor,
+          limit,
+        );
 
       // If Elasticsearch returns results, fetch full data from Prisma
       if (elasticsearchResult.medications.length > 0) {
-        const slugs = elasticsearchResult.medications.map(m => m.slug);
-        
+        const slugs = elasticsearchResult.medications.map((m) => m.slug);
+
         // Fetch full medication data from Prisma using the slugs
         const medications = await this.prisma.drug.findMany({
           where: {
@@ -233,9 +249,12 @@ export class MedicationsService {
         });
 
         // Sort medications to match the order returned by Elasticsearch
-        const sortedMedications = slugs.map(slug => 
-          medications.find(m => m.slug === slug)
-        ).filter((medication): medication is NonNullable<typeof medication> => medication !== undefined);
+        const sortedMedications = slugs
+          .map((slug) => medications.find((m) => m.slug === slug))
+          .filter(
+            (medication): medication is NonNullable<typeof medication> =>
+              medication !== undefined,
+          );
 
         return {
           medications: sortedMedications,
@@ -251,11 +270,8 @@ export class MedicationsService {
         hasMore: false,
       };
     } catch (error) {
-      console.log(
-        'Elasticsearch filter failed:',
-        error,
-      );
-      
+      console.log('Elasticsearch filter failed:', error);
+
       // Return empty result since tags are only stored in Elasticsearch
       return {
         medications: [],
@@ -265,8 +281,28 @@ export class MedicationsService {
     }
   }
 
+  async getTagsByCategory() {
+    const tags = await this.prisma.tag.findMany({
+      select: {
+        id: true,
+        name: true,
+        category: true,
+      },
+      orderBy: [{ category: 'asc' }, { name: 'asc' }],
+    });
+
+    return tags;
+  }
+
   private async searchMedicationsInDatabase(
     query: string,
+    filters?: {
+      tags_condition?: string[];
+      tags_substance?: string[];
+      tags_indications?: string[];
+      tags_strengths_concentrations?: string[];
+      tags_population?: string[];
+    },
     cursor?: string,
     limit: number = 20,
   ): Promise<MedicationsResult> {
@@ -281,61 +317,152 @@ export class MedicationsService {
       }
     }
 
-    // Simple text search on ai_ fields and other relevant fields
-    const searchConditions = {
-      OR: [
-        // AI fields search
+    // Build search conditions
+    const searchConditions: any = {
+      AND: [
         {
-          ai_warnings: {
-            contains: query,
-            mode: 'insensitive' as const,
-          },
-        },
-        {
-          ai_dosing: {
-            contains: query,
-            mode: 'insensitive' as const,
-          },
-        },
-        {
-          ai_use_and_conditions: {
-            contains: query,
-            mode: 'insensitive' as const,
-          },
-        },
-        {
-          ai_contraindications: {
-            contains: query,
-            mode: 'insensitive' as const,
-          },
-        },
-        {
-          ai_description: {
-            contains: query,
-            mode: 'insensitive' as const,
-          },
-        },
-        // Basic name and title search
-        {
-          name: {
-            contains: query,
-            mode: 'insensitive' as const,
-          },
-        },
-        {
-          generic_name: {
-            contains: query,
-            mode: 'insensitive' as const,
-          },
-        },
-        {
-          title: {
-            contains: query,
-            mode: 'insensitive' as const,
-          },
+          OR: [
+            // AI fields search
+            {
+              ai_warnings: {
+                contains: query,
+                mode: 'insensitive' as const,
+              },
+            },
+            {
+              ai_dosing: {
+                contains: query,
+                mode: 'insensitive' as const,
+              },
+            },
+            {
+              ai_use_and_conditions: {
+                contains: query,
+                mode: 'insensitive' as const,
+              },
+            },
+            {
+              ai_contraindications: {
+                contains: query,
+                mode: 'insensitive' as const,
+              },
+            },
+            {
+              ai_description: {
+                contains: query,
+                mode: 'insensitive' as const,
+              },
+            },
+            // Basic name and title search
+            {
+              name: {
+                contains: query,
+                mode: 'insensitive' as const,
+              },
+            },
+            {
+              generic_name: {
+                contains: query,
+                mode: 'insensitive' as const,
+              },
+            },
+            {
+              title: {
+                contains: query,
+                mode: 'insensitive' as const,
+              },
+            },
+          ],
         },
       ],
     };
+
+    // Add tag filters if provided
+    if (filters) {
+      const tagConditions: any[] = [];
+
+      if (filters.tags_condition && filters.tags_condition.length > 0) {
+        tagConditions.push({
+          tags: {
+            some: {
+              tag: {
+                name: {
+                  in: filters.tags_condition,
+                },
+                category: 'conditions',
+              },
+            },
+          },
+        });
+      }
+
+      if (filters.tags_substance && filters.tags_substance.length > 0) {
+        tagConditions.push({
+          tags: {
+            some: {
+              tag: {
+                name: {
+                  in: filters.tags_substance,
+                },
+                category: 'substances',
+              },
+            },
+          },
+        });
+      }
+
+      if (filters.tags_indications && filters.tags_indications.length > 0) {
+        tagConditions.push({
+          tags: {
+            some: {
+              tag: {
+                name: {
+                  in: filters.tags_indications,
+                },
+                category: 'indications',
+              },
+            },
+          },
+        });
+      }
+
+      if (
+        filters.tags_strengths_concentrations &&
+        filters.tags_strengths_concentrations.length > 0
+      ) {
+        tagConditions.push({
+          tags: {
+            some: {
+              tag: {
+                name: {
+                  in: filters.tags_strengths_concentrations,
+                },
+                category: 'strengths_concentrations',
+              },
+            },
+          },
+        });
+      }
+
+      if (filters.tags_population && filters.tags_population.length > 0) {
+        tagConditions.push({
+          tags: {
+            some: {
+              tag: {
+                name: {
+                  in: filters.tags_population,
+                },
+                category: 'populations',
+              },
+            },
+          },
+        });
+      }
+
+      if (tagConditions.length > 0) {
+        searchConditions.AND.push(...tagConditions);
+      }
+    }
 
     // Get medications with simple text search
     const medications = await this.prisma.drug.findMany({
@@ -392,6 +519,4 @@ export class MedicationsService {
       hasMore,
     };
   }
-
-
 }

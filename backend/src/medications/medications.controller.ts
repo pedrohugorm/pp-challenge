@@ -47,6 +47,13 @@ export class MedicationsController {
     // Use fuzzy search if requested, otherwise use enhanced regular search
     const result = await this.medicationsService.searchMedications(
       searchDto.query,
+      {
+        tags_condition: searchDto.tags_condition,
+        tags_substance: searchDto.tags_substance,
+        tags_indications: searchDto.tags_indications,
+        tags_strengths_concentrations: searchDto.tags_strengths_concentrations,
+        tags_population: searchDto.tags_population,
+      },
       searchDto.cursor,
       searchDto.limit,
     );
@@ -91,5 +98,10 @@ export class MedicationsController {
     }
 
     return medication;
+  }
+
+  @Get('tags/categories')
+  async getTagsByCategory() {
+    return await this.medicationsService.getTagsByCategory();
   }
 }

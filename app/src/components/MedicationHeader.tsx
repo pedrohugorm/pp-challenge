@@ -1,29 +1,42 @@
 "use client"
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import SearchBar from './SearchBar';
 
 interface MedicationHeaderProps {
     title?: string;
     onSearch?: (query: string) => void;
     searchQuery?: string;
+    onFilterChange?: (filters: { [key: string]: string[] }) => void;
 }
 
 const MedicationHeader: React.FC<MedicationHeaderProps> = ({ 
     title = "Medication Search",
     onSearch,
-    searchQuery = ""
+    searchQuery = "",
+    onFilterChange
 }) => {
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const handleSearch = (query: string) => {
         if (onSearch) {
             onSearch(query);
         }
         
-        // Redirect to home page with search query as URL parameter
-        router.push(`/?q=${encodeURIComponent(query)}`);
+        // Update URL with search query and current filters
+        const params = new URLSearchParams();
+        params.set('q', query);
+        
+        // Add current filters to URL
+        Array.from(searchParams.entries()).forEach(([key, value]) => {
+            if (key.startsWith('filter_')) {
+                params.set(key, value);
+            }
+        });
+        
+        router.push(`/?${params.toString()}`);
     };
 
     return (
@@ -35,7 +48,7 @@ const MedicationHeader: React.FC<MedicationHeaderProps> = ({
                 {title}
             </div>
             <div className="flex items-center">
-                <SearchBar onSearch={handleSearch} initialValue={searchQuery} />
+                <SearchBar onSearch={handleSearch} initialValue={searchQuery} onFilterChange={onFilterChange} />
             </div>
         </div>
     );

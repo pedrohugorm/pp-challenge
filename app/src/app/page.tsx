@@ -1,12 +1,12 @@
 'use client';
 
 import React, {useEffect, useState, Suspense} from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import MedicationCard from '../components/MedicationCard';
 import MedicationAssistant from '../components/MedicationAssistant';
 import MedicationHeader from '../components/MedicationHeader';
 import LeftSidebar from '../components/LeftSidebar';
-import {fetchMedications, searchMedications, type Medication} from '@/services/medicationService';
+import {fetchMedications, searchMedications, searchMedicationsWithFilters, type Medication, type SearchFilters} from '@/services/medicationService';
 
 function SearchableContent() {
     const [medications, setMedications] = useState<Medication[]>([]);
@@ -20,13 +20,28 @@ function SearchableContent() {
                 setLoading(true);
                 const query = searchParams.get('q');
                 
-                if (query) {
-                    // Perform search
-                    const searchResults = await searchMedications(query);
+                // Extract filters from URL parameters
+                const filters: SearchFilters = {};
+                Array.from(searchParams.entries()).forEach(([key, value]) => {
+                    if (key.startsWith('filter_')) {
+                        const categoryId = key.replace('filter_', '');
+                        filters[categoryId] = value.split(',').filter(v => v.trim() !== '');
+                    }
+                });
+                
+                console.log('SearchableContent - URL changed:', {
+                    query,
+                    filters,
+                    allParams: Array.from(searchParams.entries())
+                });
+                
+                if (query || Object.keys(filters).length > 0) {
+                    // Use search endpoint when there's a query OR filters (or both)
+                    const searchResults = await searchMedications(query || '', filters);
                     console.log('Search results:', searchResults);
                     setMedications(searchResults.medications);
                 } else {
-                    // Load all medications
+                    // Load all medications only when there's no query and no filters
                     const data = await fetchMedications();
                     setMedications(data.medications);
                 }
@@ -76,17 +91,59 @@ function SearchableContent() {
 }
 
 export default function Home() {
+    const [currentFilters, setCurrentFilters] = useState<{ [key: string]: string[] }>({});
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // Update URL when filters change
+    const updateUrlWithFilters = (filters: { [key: string]: string[] }) => {
+        const params = new URLSearchParams(searchParams.toString());
+        
+        // Remove existing filter parameters
+        Array.from(params.keys()).forEach(key => {
+            if (key !== 'q' && key.startsWith('filter_')) {
+                params.delete(key);
+            }
+        });
+        
+        // Add new filter parameters
+        Object.entries(filters).forEach(([categoryId, values]) => {
+            if (values.length > 0) {
+                params.set(`filter_${categoryId}`, values.join(','));
+            }
+        });
+        
+        // Preserve the search query
+        const query = searchParams.get('q');
+        if (query) {
+            params.set('q', query);
+        }
+        
+        const newUrl = `/?${params.toString()}`;
+        console.log('Updating URL to:', newUrl);
+        router.push(newUrl);
+    };
+
+    const handleFilterChange = (filters: { [key: string]: string[] }) => {
+        console.log('Filter change detected:', filters);
+        setCurrentFilters(filters);
+        updateUrlWithFilters(filters);
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header spans full width */}
             <div className="w-full">
-                <MedicationHeader searchQuery={useSearchParams().get('q') || ""} />
+                <MedicationHeader 
+                    searchQuery={searchParams.get('q') || ""} 
+                    onFilterChange={handleFilterChange}
+                />
             </div>
             
             {/* Content area below header */}
             <div className="flex h-[calc(100vh-80px)]">
                 {/* Left Sidebar - Hidden on mobile, visible on desktop */}
-                <LeftSidebar />
+                <LeftSidebar onFilterChange={handleFilterChange} />
 
                 {/* Main Content - Medication Cards */}
                 <Suspense fallback={

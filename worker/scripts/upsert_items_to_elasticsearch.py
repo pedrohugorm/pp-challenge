@@ -133,11 +133,11 @@ def upsert_items_to_elasticsearch(q_items: list[dict], index_name: str = "drugs_
                 "ai_use_and_conditions": item.get('useAndConditions', ''),
                 "ai_contraindications": item.get('contraIndications', ''),
                 "ai_description": item.get('description', ''),
-                "tags_condition": item.get('tags_condition', []),
-                "tags_substance": item.get('tags_substance', []),
-                "tags_indications": item.get('tags_indications', []),
-                "tags_strengths_concentrations": item.get('tags_strengths_concentrations', []),
-                "tags_population": item.get('tags_population', []),
+                "tags_condition": item.get('tags_condition', {"tags": []}).get("tags", []),
+                "tags_substance": item.get('tags_substance', {"tags": []}).get("tags", []),
+                "tags_indications": item.get('tags_indications', {"tags": []}).get("tags", []),
+                "tags_strengths_concentrations": item.get('tags_strengths_concentrations', {"tags": []}).get("tags", []),
+                "tags_population": item.get('tags_population', {"tags": []}).get("tags", []),
                 "labeler": item.get('labeler', 'Unknown'),
                 "highlights": item['label'].get('highlights', {})
             }
