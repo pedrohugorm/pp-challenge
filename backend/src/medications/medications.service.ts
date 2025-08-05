@@ -182,6 +182,89 @@ export class MedicationsService {
     return this.searchMedicationsInDatabase(query, cursor, limit);
   }
 
+  async filterMedicationsByTags(
+    filters: {
+      tags_condition?: string[];
+      tags_substance?: string[];
+      tags_indications?: string[];
+      tags_strengths_concentrations?: string[];
+      tags_population?: string[];
+    },
+    cursor?: string,
+    limit: number = 20,
+  ): Promise<MedicationsResult> {
+    try {
+      // Try Elasticsearch filter first
+      const elasticsearchResult = await this.elasticsearchService.filterMedicationsByTags(
+        filters,
+        cursor,
+        limit,
+      );
+
+      // If Elasticsearch returns results, fetch full data from Prisma
+      if (elasticsearchResult.medications.length > 0) {
+        const slugs = elasticsearchResult.medications.map(m => m.slug);
+        
+        // Fetch full medication data from Prisma using the slugs
+        const medications = await this.prisma.drug.findMany({
+          where: {
+            slug: {
+              in: slugs,
+            },
+          },
+          select: {
+            id: true,
+            name: true,
+            generic_name: true,
+            product_type: true,
+            effective_time: true,
+            title: true,
+            slug: true,
+            updated_at: true,
+            meta_description: true,
+            meta_description_blocks: true,
+            labeler: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        });
+
+        // Sort medications to match the order returned by Elasticsearch
+        const sortedMedications = slugs.map(slug => 
+          medications.find(m => m.slug === slug)
+        ).filter((medication): medication is NonNullable<typeof medication> => medication !== undefined);
+
+        return {
+          medications: sortedMedications,
+          nextCursor: elasticsearchResult.nextCursor,
+          hasMore: elasticsearchResult.hasMore,
+        };
+      }
+
+      // If Elasticsearch returns no results, return empty result
+      return {
+        medications: [],
+        nextCursor: undefined,
+        hasMore: false,
+      };
+    } catch (error) {
+      console.log(
+        'Elasticsearch filter failed:',
+        error,
+      );
+      
+      // Return empty result since tags are only stored in Elasticsearch
+      return {
+        medications: [],
+        nextCursor: undefined,
+        hasMore: false,
+      };
+    }
+  }
+
   private async searchMedicationsInDatabase(
     query: string,
     cursor?: string,
@@ -309,4 +392,6 @@ export class MedicationsService {
       hasMore,
     };
   }
+
+
 }

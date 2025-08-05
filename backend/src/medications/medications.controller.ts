@@ -11,6 +11,7 @@ import {
 import { MedicationsService } from './medications.service';
 import { GetMedicationsDto } from './dto/get-medications.dto';
 import { SearchMedicationsDto } from './dto/search-medications.dto';
+import { FilterMedicationsDto } from './dto/filter-medications.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager/dist';
 
 export interface MedicationsResponse {
@@ -48,6 +49,29 @@ export class MedicationsController {
       searchDto.query,
       searchDto.cursor,
       searchDto.limit,
+    );
+
+    return {
+      medications: result.medications,
+      nextCursor: result.nextCursor,
+      hasMore: result.hasMore,
+    };
+  }
+
+  @Get('filter')
+  async filterMedications(
+    @Query() filterDto: FilterMedicationsDto,
+  ): Promise<MedicationsResponse> {
+    const result = await this.medicationsService.filterMedicationsByTags(
+      {
+        tags_condition: filterDto.tags_condition,
+        tags_substance: filterDto.tags_substance,
+        tags_indications: filterDto.tags_indications,
+        tags_strengths_concentrations: filterDto.tags_strengths_concentrations,
+        tags_population: filterDto.tags_population,
+      },
+      filterDto.cursor,
+      filterDto.limit,
     );
 
     return {

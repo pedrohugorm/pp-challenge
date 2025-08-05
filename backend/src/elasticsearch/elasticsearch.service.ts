@@ -119,4 +119,131 @@ export class ElasticsearchService implements OnModuleInit {
       };
     }
   }
+
+  async filterMedicationsByTags(
+    filters: {
+      tags_condition?: string[];
+      tags_substance?: string[];
+      tags_indications?: string[];
+      tags_strengths_concentrations?: string[];
+      tags_population?: string[];
+    },
+    cursor?: string,
+    limit: number = 20,
+  ): Promise<{
+    medications: ElasticsearchSearchResult[];
+    nextCursor?: string;
+    hasMore: boolean;
+  }> {
+    try {
+      // Build AND query for all provided filters
+      const mustClauses: any[] = [];
+
+      // Add each filter as a terms query (exact match for arrays)
+      if (filters.tags_condition && filters.tags_condition.length > 0) {
+        mustClauses.push({
+          terms: {
+            tags_condition: filters.tags_condition,
+          },
+        });
+      }
+
+      if (filters.tags_substance && filters.tags_substance.length > 0) {
+        mustClauses.push({
+          terms: {
+            tags_substance: filters.tags_substance,
+          },
+        });
+      }
+
+      if (filters.tags_indications && filters.tags_indications.length > 0) {
+        mustClauses.push({
+          terms: {
+            tags_indications: filters.tags_indications,
+          },
+        });
+      }
+
+      if (filters.tags_strengths_concentrations && filters.tags_strengths_concentrations.length > 0) {
+        mustClauses.push({
+          terms: {
+            tags_strengths_concentrations: filters.tags_strengths_concentrations,
+          },
+        });
+      }
+
+      if (filters.tags_population && filters.tags_population.length > 0) {
+        mustClauses.push({
+          terms: {
+            tags_population: filters.tags_population,
+          },
+        });
+      }
+
+      // If no filters provided, return empty result
+      if (mustClauses.length === 0) {
+        return {
+          medications: [],
+          nextCursor: undefined,
+          hasMore: false,
+        };
+      }
+
+      const searchQuery: any = {
+        index: this.indexName,
+        query: {
+          bool: {
+            must: mustClauses,
+          },
+        },
+        sort: [{ _score: { order: 'desc' } }],
+        size: limit + 1, // Take one extra to check if there are more
+        search_after: [],
+      };
+
+      if (cursor) {
+        searchQuery.search_after = [cursor];
+      }
+
+      console.log(
+        'Elasticsearch filter query:',
+        JSON.stringify(searchQuery, null, 2),
+      );
+      const response = await this.client.search(searchQuery);
+      console.log('Elasticsearch filter response hits:', response.hits.total);
+
+      const medications = response.hits.hits.map((hit) => {
+        const source = hit._source as { slug: string };
+        return {
+          slug: source.slug,
+          score: hit._score,
+        };
+      }) as ElasticsearchSearchResult[];
+
+      // Check if there are more items
+      const hasMore = medications.length > limit;
+      const itemsToReturn = hasMore ? medications.slice(0, limit) : medications;
+
+      // Get the next cursor (search_after)
+      let nextCursor: string | undefined;
+      if (hasMore && itemsToReturn.length > 0) {
+        const lastHit = response.hits.hits[limit - 1];
+        nextCursor = lastHit.sort?.[0]?.toString();
+      }
+
+      return {
+        medications: itemsToReturn,
+        nextCursor,
+        hasMore,
+      };
+    } catch (error) {
+      console.error('Elasticsearch filter error:', error);
+      // Fallback to an empty result if Elasticsearch is not available
+      return {
+        medications: [],
+        nextCursor: undefined,
+        hasMore: false,
+      };
+    }
+  }
 }
