@@ -1,5 +1,5 @@
 import React from 'react';
-import SimplePill from './SimplePill';
+import ClickableSimplePill from './ClickableSimplePill';
 
 interface TagsByCategoryProps {
     tagsByCategory: Record<string, string[]> | null | undefined;
@@ -24,7 +24,11 @@ export default function TagsByCategory({ tagsByCategory, categoryKeys, className
         <div className={`flex flex-wrap gap-2 ${className}`}>
             {validCategories.map(categoryKey => 
                 tagsByCategory[categoryKey].map((tag: string) => (
-                    <SimplePill key={`${categoryKey}-${tag}`} text={tag} />
+                    <ClickableSimplePill 
+                        key={`${categoryKey}-${tag}`} 
+                        text={tag} 
+                        category={categoryKey}
+                    />
                 ))
             )}
         </div>
