@@ -75,6 +75,11 @@ def upsert_items_to_elasticsearch(q_items: list[dict], index_name: str = "drugs_
                         "ai_use_and_conditions": {"type": "text"},
                         "ai_contraindications": {"type": "text"},
                         "ai_description": {"type": "text"},
+                        "tags_condition": {"type": "keyword"},
+                        "tags_substance": {"type": "keyword"},
+                        "tags_indications": {"type": "keyword"},
+                        "tags_strengths_concentrations": {"type": "keyword"},
+                        "tags_population": {"type": "keyword"},
                         "labeler": {"type": "keyword"},
                         "highlights": {"type": "object"}
                     }
@@ -128,6 +133,11 @@ def upsert_items_to_elasticsearch(q_items: list[dict], index_name: str = "drugs_
                 "ai_use_and_conditions": item.get('useAndConditions', ''),
                 "ai_contraindications": item.get('contraIndications', ''),
                 "ai_description": item.get('description', ''),
+                "tags_condition": item.get('tags_condition', []),
+                "tags_substance": item.get('tags_substance', []),
+                "tags_indications": item.get('tags_indications', []),
+                "tags_strengths_concentrations": item.get('tags_strengths_concentrations', []),
+                "tags_population": item.get('tags_population', []),
                 "labeler": item.get('labeler', 'Unknown'),
                 "highlights": item['label'].get('highlights', {})
             }

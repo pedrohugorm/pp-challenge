@@ -129,7 +129,7 @@ async def main():
         json_array = json.load(f)
 
         # Filter items if needed (uncomment the line below if you want to process only specific items)
-        json_array = [item for item in json_array if item['drugName'] in 'Ebglyss']
+        # json_array = [item for item in json_array if item['drugName'] in 'Ebglyss']
 
         # Process all items in parallel
         print(f"Processing {len(json_array)} items in parallel...")

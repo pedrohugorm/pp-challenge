@@ -3,15 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { type Medication, fetchMedicationBySlug } from '@/services/medicationService';
-import DOMPurify from "dompurify";
-import {RenderBlocks, renderBlocks} from "@/utils/renderBlocks";
+import {RenderBlocks} from "@/utils/renderBlocks";
 
 interface SimilarReferenceMedicationCardProps {
     medicalSlug: string;
-}
-
-const cleanHtml = (html: string) => {
-    return DOMPurify(window).sanitize(html);
 }
 
 export default function SimilarReferenceMedicationCard({ medicalSlug }: SimilarReferenceMedicationCardProps) {
