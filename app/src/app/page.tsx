@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import MedicationCard from '../components/MedicationCard';
 import MedicationAssistant from '../components/MedicationAssistant';
 import MedicationHeader from '../components/MedicationHeader';
+import LeftSidebar from '../components/LeftSidebar';
 import {fetchMedications, searchMedications, type Medication} from '@/services/medicationService';
 
 function SearchableContent() {
@@ -43,7 +44,6 @@ function SearchableContent() {
 
     return (
         <div className="flex-1 flex flex-col">
-            <MedicationHeader searchQuery={searchParams.get('q') || ""} />
             <div className="flex-1 p-4 lg:p-6 overflow-y-auto">
                 {loading && (
                     <div className="flex justify-center items-center h-64">
@@ -78,7 +78,16 @@ function SearchableContent() {
 export default function Home() {
     return (
         <div className="min-h-screen bg-gray-50">
-            <div className="flex h-screen">
+            {/* Header spans full width */}
+            <div className="w-full">
+                <MedicationHeader searchQuery={useSearchParams().get('q') || ""} />
+            </div>
+            
+            {/* Content area below header */}
+            <div className="flex h-[calc(100vh-80px)]">
+                {/* Left Sidebar - Hidden on mobile, visible on desktop */}
+                <LeftSidebar />
+
                 {/* Main Content - Medication Cards */}
                 <Suspense fallback={
                     <div className="flex-1 flex flex-col">

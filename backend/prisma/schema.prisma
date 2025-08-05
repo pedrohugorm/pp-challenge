@@ -64,6 +64,31 @@ model Drug {
   updated_at                  DateTime  @updatedAt
 
   labeler Labeler @relation(fields: [labeler_id], references: [id])
+  tags    DrugTag[]
 
   @@map("drugs")
+}
+
+model Tag {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  category   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  drugs DrugTag[]
+
+  @@map("tags")
+}
+
+model DrugTag {
+  drug_id   String
+  tag_id    Int
+  created_at DateTime @default(now())
+
+  drug Drug @relation(fields: [drug_id], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([drug_id, tag_id])
+  @@map("drug_tags")
 }
