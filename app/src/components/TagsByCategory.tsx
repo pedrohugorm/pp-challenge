@@ -21,16 +21,17 @@ export default function TagsByCategory({ tagsByCategory, categoryKeys, className
     }
 
     return (
-        <div className={`flex flex-wrap gap-2 ${className}`}>
+        <ul className={`tags flex flex-wrap gap-2 list-none p-0 m-0 ${className}`}>
             {validCategories.map(categoryKey => 
                 tagsByCategory[categoryKey].map((tag: string) => (
-                    <ClickableSimplePill 
-                        key={`${categoryKey}-${tag}`} 
-                        text={tag} 
-                        category={categoryKey}
-                    />
+                    <li key={`${categoryKey}-${tag}`} className="tag list-none">
+                        <ClickableSimplePill 
+                            text={tag} 
+                            category={categoryKey}
+                        />
+                    </li>
                 ))
             )}
-        </div>
+        </ul>
     );
 } 
