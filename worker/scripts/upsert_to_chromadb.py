@@ -104,6 +104,40 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
     
     for item in q_items:
         # Concatenate relevant fields into one variable
+        # Add tag-based sentences to help with chunking and similarities
+        tag_sentences = []
+        drug_name = item.get('drugName', '')
+        
+        # Indications tags
+        if item.get('tags_indications') and item['tags_indications'].get('tags'):
+            for tag in item['tags_indications']['tags']:
+                tag_sentences.append(f"{drug_name} is indicated for {tag}")
+        
+        # Conditions tags
+        if item.get('tags_condition') and item['tags_condition'].get('tags'):
+            for tag in item['tags_condition']['tags']:
+                tag_sentences.append(f"{drug_name} is used to treat {tag}")
+        
+        # Substances tags
+        if item.get('tags_substance') and item['tags_substance'].get('tags'):
+            for tag in item['tags_substance']['tags']:
+                tag_sentences.append(f"{drug_name} contains {tag}")
+        
+        # Strengths/Concentrations tags
+        if item.get('tags_strengths_concentrations') and item['tags_strengths_concentrations'].get('tags'):
+            for tag in item['tags_strengths_concentrations']['tags']:
+                tag_sentences.append(f"{drug_name} is available in {tag}")
+        
+        # Populations tags
+        if item.get('tags_population') and item['tags_population'].get('tags'):
+            for tag in item['tags_population']['tags']:
+                tag_sentences.append(f"{drug_name} is used in {tag}")
+        
+        # Contraindications tags
+        if item.get('tags_contraindications') and item['tags_contraindications'].get('tags'):
+            for tag in item['tags_contraindications']['tags']:
+                tag_sentences.append(f"{drug_name} is contraindicated in {tag}")
+        
         concatenated_text = " ".join([
             str(item['label'].get('indicationsAndUsage', '')).strip(),
             str(item['label'].get('dosageAndAdministration', '')).strip(),
@@ -125,8 +159,11 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
             str(item.get('metaDescription', '')).strip(),
             str(item.get('dosing', '')).strip(),
             str(item.get('warnings', '')).strip(),
-            str(item['label'].get('highlights', {}).get('dosageAndAdministration', '')).strip()
+            str(item['label'].get('highlights', {}).get('dosageAndAdministration', '')).strip(),
+            " ".join(tag_sentences)
         ])
+
+        
 
         similar_check_text = " ".join([
             str(item['label'].get('indicationsAndUsage', '')).strip(),

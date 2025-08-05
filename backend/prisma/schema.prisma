@@ -71,13 +71,14 @@ model Drug {
 
 model Tag {
   id         Int      @id @default(autoincrement())
-  name       String   @unique
+  name       String
   category   String
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
   drugs DrugTag[]
 
+  @@unique([name, category])
   @@map("tags")
 }
 

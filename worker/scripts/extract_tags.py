@@ -290,3 +290,46 @@ async def extract_population_tags(q_item: Dict[str, Any]) -> dict:
     content = remove_html_tags(content)
     tag_list = await extract_tags(get_extract_population(content))
     return tag_list
+
+
+def get_extract_contraindications(content) -> str:
+    return f"""
+You are a medical data extraction assistant. Your task is to extract the **contraindications** for a drug based on the provided text. Focus only on specific conditions, diseases, or patient scenarios where the drug is **explicitly not recommended** or **should be avoided**.
+
+## Output Format:
+Return only a **JSON array** under the key `"contraindications"`. Each item must be a concise, human-readable term (e.g., "Angioedema", "Pregnancy", "Severe renal impairment").
+
+## Extraction Rules:
+- Include only conditions, diagnoses, or population characteristics that are stated as contraindications.
+- **Do not include** side effects, general warnings, dosage information, or indications.
+- Normalize terms to sentence case (e.g., "Severe hepatic impairment").
+- Use generic clinical terms only—do not include brand names or abbreviations.
+
+## Example Input:
+"Use of this drug is contraindicated in patients with a history of angioedema related to previous ACE inhibitor therapy. It should also not be used during pregnancy or in patients with severe renal impairment."
+
+## Expected Output:
+```json
+{{
+  "contraindications": [
+    "Angioedema",
+    "Pregnancy",
+    "Severe renal impairment"
+  ]
+}}
+
+### Input:
+{content}
+"""
+
+
+async def extract_contraindications_tags(q_item: Dict[str, Any]) -> dict:
+    content = q_item['label']['contraIndications']
+
+    # If no content found, return an empty string
+    if not content:
+        return {"tags": []}
+
+    content = remove_html_tags(content)
+    tag_list = await extract_tags(get_extract_contraindications(content))
+    return tag_list

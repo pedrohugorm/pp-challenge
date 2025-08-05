@@ -64,7 +64,8 @@ def upsert_items_to_postgres(q_items, structured_items_json_array, view_blocks_a
             "substances": "tags_substance", 
             "indications": "tags_indications",
             "strengths_concentrations": "tags_strengths_concentrations",
-            "populations": "tags_population"
+            "populations": "tags_population",
+            "contraindications": "tags_contraindications",
         }
         
         # Collect all unique tags

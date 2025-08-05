@@ -59,7 +59,8 @@ function formatCategoryName(category: string): string {
         'substances': 'Active Substances',
         'indications': 'Indications',
         'strengths_concentrations': 'Strengths & Concentrations',
-        'populations': 'Target Populations'
+        'populations': 'Target Populations',
+        'contraindications': 'Contraindications'
     };
     
     return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1);
