@@ -60,7 +60,7 @@ function formatCategoryName(category: string): string {
         'indications': 'Indications',
         'strengths_concentrations': 'Strengths & Concentrations',
         'populations': 'Target Populations',
-        'contraindications': 'Contraindications'
+        // 'contraindications': 'Contraindications'
     };
     
     return categoryMap[category] || category.charAt(0).toUpperCase() + category.slice(1);

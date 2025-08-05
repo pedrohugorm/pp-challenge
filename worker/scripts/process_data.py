@@ -62,7 +62,7 @@ async def process_single_item(item):
     q_item = prepare_item_for_vector_search(item)
 
     # Run all summarize functions in parallel
-    summary, description, use_and_conditions, contra_indications_warnings, warnings, dosing, tags_condition, tags_substance, tags_indication, tags_strengths_concentrations, tags_population, tags_contraindications = await asyncio.gather(
+    summary, description, use_and_conditions, contra_indications_warnings, warnings, dosing, tags_condition, tags_substance, tags_indication, tags_strengths_concentrations, tags_population = await asyncio.gather(
         summarize_meta_description(q_item),
         summarize_description(q_item),
         summarize_use_and_conditions(q_item),
@@ -74,7 +74,6 @@ async def process_single_item(item):
         extract_indication_tags(q_item),
         extract_strengths_and_concentrations_tags(q_item),
         extract_population_tags(q_item),
-        extract_contraindications_tags(q_item),
     )
 
     q_item['metaDescription'] = summary
@@ -100,7 +99,7 @@ async def process_single_item(item):
     q_item['tags_indications'] = tags_indication
     q_item['tags_strengths_concentrations'] = tags_strengths_concentrations
     q_item['tags_population'] = tags_population
-    q_item['tags_contraindications'] = tags_contraindications
+    # q_item['tags_contraindications'] = tags_contraindications
 
     # Create view_blocks as a simple dictionary like q_item
     view_blocks = {

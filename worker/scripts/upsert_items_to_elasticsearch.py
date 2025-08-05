@@ -78,7 +78,6 @@ def upsert_items_to_elasticsearch(q_items: list[dict], index_name: str = "drugs_
                         "tags_condition": {"type": "keyword"},
                         "tags_substance": {"type": "keyword"},
                         "tags_indications": {"type": "keyword"},
-                        "tags_contraindications": {"type": "keyword"},
                         "tags_strengths_concentrations": {"type": "keyword"},
                         "tags_population": {"type": "keyword"},
                         "labeler": {"type": "keyword"},
@@ -95,6 +94,13 @@ def upsert_items_to_elasticsearch(q_items: list[dict], index_name: str = "drugs_
             print(f"Created index: {index_name}")
         else:
             print(f"Index already exists: {index_name}")
+        
+        # Helper function to safely get tags
+        def get_safe_tags(tag_field):
+            if tag_field is None:
+                return []
+            tags_data = tag_field.get('tags') if isinstance(tag_field, dict) else None
+            return tags_data if tags_data is not None else []
         
         # Process each item
         total_items = 0
@@ -134,12 +140,11 @@ def upsert_items_to_elasticsearch(q_items: list[dict], index_name: str = "drugs_
                 "ai_use_and_conditions": item.get('useAndConditions', ''),
                 "ai_contraindications": item.get('contraIndications', ''),
                 "ai_description": item.get('description', ''),
-                "tags_condition": item.get('tags_condition', {"tags": []}).get("tags", []),
-                "tags_substance": item.get('tags_substance', {"tags": []}).get("tags", []),
-                "tags_indications": item.get('tags_indications', {"tags": []}).get("tags", []),
-                "tags_contraindications": item.get('tags_contraindications', {"tags": []}).get("tags", []),
-                "tags_strengths_concentrations": item.get('tags_strengths_concentrations', {"tags": []}).get("tags", []),
-                "tags_population": item.get('tags_population', {"tags": []}).get("tags", []),
+                "tags_condition": get_safe_tags(item.get('tags_condition')),
+                "tags_substance": get_safe_tags(item.get('tags_substance')),
+                "tags_indications": get_safe_tags(item.get('tags_indications')),
+                "tags_strengths_concentrations": get_safe_tags(item.get('tags_strengths_concentrations')),
+                "tags_population": get_safe_tags(item.get('tags_population')),
                 "labeler": item.get('labeler', 'Unknown'),
                 "highlights": item['label'].get('highlights', {})
             }
