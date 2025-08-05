@@ -324,7 +324,7 @@ Return only a **JSON array** under the key `"contraindications"`. Each item must
 
 
 async def extract_contraindications_tags(q_item: Dict[str, Any]) -> dict:
-    content = q_item['label']['contraIndications']
+    content = q_item['label']['contraindications']
 
     # If no content found, return an empty string
     if not content:

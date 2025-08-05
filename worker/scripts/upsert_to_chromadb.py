@@ -112,31 +112,59 @@ def upsert_q_items_to_chromadb(q_items: list[dict], collection_name: str = "drug
         if item.get('tags_indications') and item['tags_indications'].get('tags'):
             for tag in item['tags_indications']['tags']:
                 tag_sentences.append(f"{drug_name} is indicated for {tag}")
+                tag_sentences.append(f"{drug_name} is prescribed for {tag}")
+                tag_sentences.append(f"{drug_name} is used to treat {tag}")
+                tag_sentences.append(f"{drug_name} is effective for {tag}")
+                tag_sentences.append(f"{drug_name} is recommended for {tag}")
         
         # Conditions tags
         if item.get('tags_condition') and item['tags_condition'].get('tags'):
             for tag in item['tags_condition']['tags']:
                 tag_sentences.append(f"{drug_name} is used to treat {tag}")
+                tag_sentences.append(f"{drug_name} is indicated for {tag}")
+                tag_sentences.append(f"{drug_name} is prescribed for {tag}")
+                tag_sentences.append(f"{drug_name} is effective against {tag}")
+                tag_sentences.append(f"{drug_name} is recommended for {tag}")
+                tag_sentences.append(f"{drug_name} helps manage {tag}")
         
         # Substances tags
         if item.get('tags_substance') and item['tags_substance'].get('tags'):
             for tag in item['tags_substance']['tags']:
                 tag_sentences.append(f"{drug_name} contains {tag}")
+                tag_sentences.append(f"{drug_name} includes {tag}")
+                tag_sentences.append(f"{drug_name} is composed of {tag}")
+                tag_sentences.append(f"{drug_name} has {tag} as an ingredient")
+                tag_sentences.append(f"{drug_name} contains the substance {tag}")
         
         # Strengths/Concentrations tags
         if item.get('tags_strengths_concentrations') and item['tags_strengths_concentrations'].get('tags'):
             for tag in item['tags_strengths_concentrations']['tags']:
                 tag_sentences.append(f"{drug_name} is available in {tag}")
+                tag_sentences.append(f"{drug_name} comes in {tag}")
+                tag_sentences.append(f"{drug_name} is offered in {tag}")
+                tag_sentences.append(f"{drug_name} is manufactured in {tag}")
+                tag_sentences.append(f"{drug_name} is available as {tag}")
+                tag_sentences.append(f"{drug_name} has strength {tag}")
         
         # Populations tags
         if item.get('tags_population') and item['tags_population'].get('tags'):
             for tag in item['tags_population']['tags']:
                 tag_sentences.append(f"{drug_name} is used in {tag}")
+                tag_sentences.append(f"{drug_name} is prescribed for {tag}")
+                tag_sentences.append(f"{drug_name} is indicated for {tag}")
+                tag_sentences.append(f"{drug_name} is suitable for {tag}")
+                tag_sentences.append(f"{drug_name} is recommended for {tag}")
+                tag_sentences.append(f"{drug_name} is approved for {tag}")
         
         # Contraindications tags
         if item.get('tags_contraindications') and item['tags_contraindications'].get('tags'):
             for tag in item['tags_contraindications']['tags']:
                 tag_sentences.append(f"{drug_name} is contraindicated in {tag}")
+                tag_sentences.append(f"{drug_name} should not be used in {tag}")
+                tag_sentences.append(f"{drug_name} is not recommended for {tag}")
+                tag_sentences.append(f"{drug_name} is not suitable for {tag}")
+                tag_sentences.append(f"{drug_name} should be avoided in {tag}")
+                tag_sentences.append(f"{drug_name} is not indicated for {tag}")
         
         concatenated_text = " ".join([
             str(item['label'].get('indicationsAndUsage', '')).strip(),
