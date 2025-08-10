@@ -1,4 +1,4 @@
-# Medication Search for PrescriberPoint
+# Medication Search for REDACTED company
 
     Disclaimer: This readme was generated with the help of AI. But I did ask it to type each detail instead of asking it to generate the content randomly.
 
